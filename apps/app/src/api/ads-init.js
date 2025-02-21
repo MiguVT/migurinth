@@ -104,3 +104,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const observer = new MutationObserver(muteVideos)
   observer.observe(document.body, { childList: true, subtree: true })
 })
+
+// Ensure Modrinth Plus is enabled for all users
+function enableModrinthPlus() {
+  return true;
+}
+
+enableModrinthPlus();

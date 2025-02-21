@@ -53,5 +53,8 @@
     "vue-tsc": "^2.1.6"
   },
   "packageManager": "pnpm@9.4.0",
-  "web-types": "../../web-types.json"
+  "web-types": "../../web-types.json",
+  "modrinthPlus": {
+    "enabled": true
+  }
 }

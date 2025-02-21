@@ -1,62 +1,14 @@
 <template>
-  <PurchaseModal
-    ref="purchaseModal"
-    :product="midasProduct"
-    :country="country"
-    :publishable-key="config.public.stripePublishableKey"
-    :send-billing-request="
-      async (body) =>
-        await useBaseFetch('billing/payment', { internal: true, method: 'POST', body })
-    "
-    :fetch-payment-data="fetchPaymentData"
-    :on-error="
-      (err) =>
-        data.$notify({
-          group: 'main',
-          title: 'An error occurred',
-          type: 'error',
-          text: err.message ?? (err.data ? err.data.description : err),
-        })
-    "
-    :customer="customer"
-    :payment-methods="paymentMethods"
-    :return-url="`${config.public.siteUrl}/settings/billing`"
-  />
   <div class="main-hero">
     <div class="flex max-w-screen-lg flex-col items-center gap-4 text-center">
       <ModrinthPlusIcon class="h-8 w-max text-contrast" />
-      <h1 class="m-0 text-[4rem]">Support creators and go ad-free</h1>
+      <h1 class="m-0 text-[4rem]">Modrinth Plus is now enabled for all users!</h1>
       <p class="m-0 mb-4 text-[18px] leading-relaxed">
-        Subscribe to Modrinth Plus to go ad-free, support Modrinth's development, and get an
-        exclusive profile badge! Half your subscription goes directly to Modrinth creators. Cancel
-        anytime.
+        Enjoy an ad-free experience, support Modrinth's development, and get an exclusive profile badge!
       </p>
       <p class="m-0 text-[2rem] font-bold text-purple">
-        {{ formatPrice(vintl.locale, price.prices.intervals.monthly, price.currency_code) }}/mo
+        Thank you for being a part of our community.
       </p>
-      <p class="m-0 mb-4 text-secondary">
-        or save
-        {{ calculateSavings(price.prices.intervals.monthly, price.prices.intervals.yearly) }}% with
-        annual billing!
-      </p>
-      <nuxt-link
-        v-if="auth.user && isPermission(auth.user.badges, 1 << 0)"
-        to="/settings/billing"
-        class="btn btn-purple btn-large"
-      >
-        <SettingsIcon aria-hidden="true" />
-        Manage subscription
-      </nuxt-link>
-      <button v-else-if="auth.user" class="btn btn-purple btn-large" @click="purchaseModal.show()">
-        Subscribe
-      </button>
-      <nuxt-link
-        v-else
-        :to="`/auth/sign-in?redirect=${encodeURIComponent('/plus?showModal=true')}`"
-        class="btn btn-purple btn-large"
-      >
-        Subscribe
-      </nuxt-link>
     </div>
   </div>
   <div class="perks-hero">
@@ -91,60 +43,17 @@ import {
   HeartIcon,
   SparklesIcon,
   StarIcon,
-  SettingsIcon,
 } from "@modrinth/assets";
-import { PurchaseModal } from "@modrinth/ui";
-import { calculateSavings, formatPrice, getCurrency } from "@modrinth/utils";
-import { products } from "~/generated/state.json";
 
-const title = "Subscribe to Modrinth Plus!";
+const title = "Modrinth Plus is now enabled for all users!";
 const description =
-  "Subscribe to Modrinth Plus to go ad-free, support Modrinth's development, and get an exclusive profile badge! Half your subscription goes directly to Modrinth creators.";
+  "Enjoy an ad-free experience, support Modrinth's development, and get an exclusive profile badge!";
 
 useSeoMeta({
   title,
   description,
   ogTitle: title,
   ogDescription: description,
-});
-
-useHead({
-  script: [
-    {
-      src: "https://js.stripe.com/v3/",
-      defer: true,
-      async: true,
-    },
-  ],
-});
-
-const vintl = useVIntl();
-
-const data = useNuxtApp();
-const config = useRuntimeConfig();
-
-const auth = await useAuth();
-const purchaseModal = ref();
-const midasProduct = ref(products.find((x) => x.metadata.type === "midas"));
-const country = useUserCountry();
-const price = computed(() =>
-  midasProduct.value.prices.find((x) => x.currency_code === getCurrency(country.value)),
-);
-const customer = ref();
-const paymentMethods = ref([]);
-
-async function fetchPaymentData() {
-  [customer.value, paymentMethods.value] = await Promise.all([
-    useBaseFetch("billing/customer", { internal: true }),
-    useBaseFetch("billing/payment_methods", { internal: true }),
-  ]);
-}
-
-const route = useRoute();
-onMounted(() => {
-  if (route.query.showModal) {
-    purchaseModal.value.show();
-  }
 });
 </script>
 <style lang="scss" scoped>

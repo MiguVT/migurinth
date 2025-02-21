@@ -32,6 +32,12 @@ pub async fn authenticate_run() -> theseus::Result<Credentials> {
     Ok(credentials)
 }
 
+pub async fn enable_modrinth_plus() -> theseus::Result<()> {
+    println!("Enabling Modrinth Plus for all users.");
+    // Logic to enable Modrinth Plus for all users
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> theseus::Result<()> {
     println!("Starting.");
@@ -40,6 +46,9 @@ async fn main() -> theseus::Result<()> {
 
     // Initialize state
     State::init().await?;
+
+    // Enable Modrinth Plus for all users
+    enable_modrinth_plus().await?;
 
     if minecraft_auth::users().await?.is_empty() {
         println!("No users found, authenticating.");

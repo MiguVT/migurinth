@@ -15,5 +15,8 @@
     "@modrinth/app-frontend": "workspace:*",
     "@modrinth/app-lib": "workspace:*",
     "@modrinth/daedalus": "workspace:*"
+  },
+  "modrinthPlus": {
+    "enabled": true
   }
 }
