@@ -12,7 +12,8 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDIwMzM5QkE0M0FCOERBMzkKUldRNTJyZzZwSnN6SUdPRGdZREtUUGxMblZqeG9OVHYxRUlRTzJBc2U3MUNJaDMvZDQ1UytZZmYK",
+      "active": false,
+      "pubkey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA39yH5fdzsxQgjVlxpQPY6NFcucP2M7nafGorIXg0zMSTVaRENuBYtLdCPOoRNp59nMkUuJ7cpSmeui8jVj+/CY/xt/ynZPTDMXm3mDQx/0O/XUjEVK5d0QtO+LcKN7vBJ+Es1g787whYVTEDk4MdLdBLtE4q7qFD/1jbvRWuEWtBP9As0sA4zowLCCIgY0D0CGONHhj46Dx+3eNV2Y31JC4vO6I+WQaL+uSRLwEhad9lp6pamCHbs0xAUgxtqjznOcpWyQ30S/OW2ipeLgX/QpyIgeIdljZFcr3idnlXfeOsgSQFNJN04U7HgAp5BzWpbtO2LIkGsQv41ci/N80gpwIDAQAB",
       "endpoints": ["https://launcher-files.modrinth.com/updates.json"]
     }
   }
