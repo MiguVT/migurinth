@@ -234,57 +234,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-
-      - name: Cache Rust setup
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Node.js dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Setup PNPM and install global dependencies
-        shell: bash
-        run: |
-          # Actualiza e instala dependencias del sistema
-          sudo apt-get update
-          sudo apt-get install -y jq patchelf
-          export SHELL=/bin/bash
-
-          # Activa y prepara Corepack (esto habilita pnpm)
-          corepack enable
-          corepack prepare --activate
-
-          # Ahora configura el directorio global para pnpm
-          export PNPM_HOME="$HOME/.pnpm-global"
-          export PATH="$PNPM_HOME:$PATH"
-          pnpm config set global-bin-dir "$PNPM_HOME"
-
-          # Configura pnpm (crea el directorio si es necesario)
-          pnpm setup
-          echo "Directorio global: $(pnpm bin -g)"
-
-          # Instala las herramientas globales necesarias
-          pnpm install -g @tauri-apps/cli@latest
+          merge-multiple: true
 
       - name: Extract version
         id: extract_version
@@ -293,31 +243,59 @@ jobs:
           VERSION=$(jq -r '.version' apps/app/tauri.conf.json)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Generate updates.json using Tauri (With Signing)
+      - name: Generate updates.json manually
         shell: bash
         run: |
-          export PNPM_HOME="$HOME/.pnpm-global"
-          export PATH="$PNPM_HOME:$PATH"
-          TAURI_BIN="$(pnpm bin -g)/tauri"
-          echo "Using Tauri binary at: $TAURI_BIN"
+          set -e
+          # Define la URL base de descarga usando el repositorio y la versión
           BASE_URL="https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}"
-          $TAURI_BIN signer generate \
-            -i artifacts/windows-latest \
-            -i artifacts/macos-latest \
-            -i artifacts/ubuntu-22.04 \
-            --base-url "$BASE_URL" \
-            --windows-url "$BASE_URL/Modrinth.App_${{ env.VERSION }}_x64-setup.nsis.zip" \
-            --windows-install-url "$BASE_URL/Modrinth.App_${{ env.VERSION }}_x64-setup.exe" \
-            --macos-url "$BASE_URL/Modrinth.App_${{ env.VERSION }}_universal.app.tar.gz" \
-            --macos-install-url "$BASE_URL/Modrinth.App_${{ env.VERSION }}_universal.dmg" \
-            --linux-url "$BASE_URL/Modrinth.App_${{ env.VERSION }}_amd64.AppImage.tar.gz" \
-            --linux-install-urls "$BASE_URL/Modrinth.App_${{ env.VERSION }}_amd64.deb,$BASE_URL/Modrinth.App_${{ env.VERSION }}_amd64.rpm,$BASE_URL/Modrinth.App_${{ env.VERSION }}_amd64.AppImage" \
-            -o updates.json \
-            --signing-key "$TAURI_SIGNING_PRIVATE_KEY" \
-            --signing-key-password "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          UPDATES_JSON="updates.json"
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Define el mapeo de plataformas con sus archivos correspondientes.
+          # Se asume que para cada archivo de instalador existe un archivo de firma con el mismo nombre + ".sig" en la carpeta artifacts.
+          declare -A FILES=(
+            ["windows"]="${BASE_URL}/Modrinth.App_${{ env.VERSION }}_x64-setup.exe"
+            ["macos"]="${BASE_URL}/Modrinth.App_${{ env.VERSION }}_universal.dmg"
+            ["linux"]="${BASE_URL}/Modrinth.App_${{ env.VERSION }}_amd64.deb"
+          )
+
+          # Inicia el JSON con versión y fecha de publicación
+          echo '{' > $UPDATES_JSON
+          echo '  "version": "'${{ env.VERSION }}'",' >> $UPDATES_JSON
+          echo '  "pub_date": "'$PUB_DATE'",' >> $UPDATES_JSON
+          echo '  "platforms": {' >> $UPDATES_JSON
+
+          FIRST=1
+          for platform in "${!FILES[@]}"; do
+            FILE_URL="${FILES[$platform]}"
+            FILE_BASENAME=$(basename "$FILE_URL")
+            SIG_FILE="artifacts/${FILE_BASENAME}.sig"
+            
+            if [ ! -f "$SIG_FILE" ]; then
+              echo "⚠️ Archivo de firma no encontrado para $FILE_BASENAME ($SIG_FILE)" >&2
+              continue
+            fi
+            
+            SIGNATURE=$(cat "$SIG_FILE" | tr -d '\n')
+            
+            if [ $FIRST -eq 1 ]; then
+              FIRST=0
+            else
+              echo "    ," >> $UPDATES_JSON
+            fi
+            
+            echo "    \"${platform}\": {" >> $UPDATES_JSON
+            echo "      \"url\": \"${FILE_URL}\"," >> $UPDATES_JSON
+            echo "      \"signature\": \"${SIGNATURE}\"" >> $UPDATES_JSON
+            echo "    }" >> $UPDATES_JSON
+          done
+
+          echo '  }' >> $UPDATES_JSON
+          echo '}' >> $UPDATES_JSON
+
+          echo "Generated updates.json:"
+          cat $UPDATES_JSON
 
       - name: Upload updates.json to release
         shell: bash
