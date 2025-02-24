@@ -284,7 +284,7 @@ jobs:
           echo "Directorio global: $(pnpm bin -g)"
 
           # Instala las herramientas globales necesarias
-          pnpm install -g @tauri-apps/cli @tauri-apps/signer
+          pnpm install -g @tauri-apps/cli@latest
 
       - name: Extract version
         id: extract_version
