@@ -28,7 +28,7 @@ jobs:
       - name: Extract version from tauri.conf.json
         id: check
         run: |
-          VERSION=$(jq -r '.package.version' apps/app/tauri.conf.json)
+          VERSION=$(jq -r '.version' apps/app/tauri.conf.json)
           echo "version=$VERSION" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
@@ -181,7 +181,7 @@ jobs:
       - name: Extract version
         id: version
         run: |
-          VERSION=$(jq -r '.package.version' apps/app/tauri.conf.json)
+          VERSION=$(jq -r '.version' apps/app/tauri.conf.json)
           echo "version=$VERSION" >> $GITHUB_ENV
 
       - name: Create GitHub Release
