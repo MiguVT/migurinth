@@ -216,6 +216,8 @@ jobs:
           jq --arg version "$VERSION" --arg timestamp "$TIMESTAMP" '.version=$version | .pub_date=$timestamp' updates_old.json > updates.json
 
       - name: Upload updates.json to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
