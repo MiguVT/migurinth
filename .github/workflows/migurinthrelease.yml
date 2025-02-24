@@ -21,27 +21,24 @@ jobs:
   check_version:
     runs-on: ubuntu-latest
     outputs:
-      new_version: ${{ steps.check.outputs.version }}
+      new_version: ${{ steps.extract_version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Extract version from tauri.conf.json
-        id: check
+        id: extract_version
         run: |
           VERSION=$(jq -r '.version' apps/app/tauri.conf.json)
-          echo "version=$VERSION" >> $GITHUB_ENV
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Check if version exists as tag
+      - name: Check if version exists as a tag
         id: check_tag
         run: |
-          git fetch --tags
-          if git show-ref --tags "v$VERSION" --quiet; then
-            echo "::error::Version v$VERSION already exists as a tag. Please increment the version number."
+          if git ls-remote --tags origin "v${{ steps.extract_version.outputs.version }}" | grep -q "v${{ steps.extract_version.outputs.version }}"; then
+            echo "::error::Version v${{ steps.extract_version.outputs.version }} already exists as a tag. Please increment the version number."
             exit 1
-          else
-            echo "Version v$VERSION is available for release."
           fi
+        shell: bash
 
   build:
     needs: check_version
@@ -231,68 +228,67 @@ jobs:
         with:
           path: artifacts
 
+      - name: Cache Rust setup
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Node.js dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
 
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-
-      - name: install dependencies (ubuntu only)
-        if: startsWith(matrix.platform, 'ubuntu')
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-        # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
-        # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
-
-      - name: Install pnpm via corepack
-        shell: bash
-        run: |
+          sudo apt-get install -y jq patchelf
           corepack enable
           corepack prepare --activate
-
-      - name: install frontend dependencies
-        run: |
           pnpm install
-          pnpm install -g @tauri-apps/signer
+          pnpm install -g @tauri-apps/cli @tauri-apps/signer
 
-      - name: Generate updates.json
+      - name: Extract version
+        id: extract_version
         run: |
           VERSION=$(jq -r '.version' apps/app/tauri.conf.json)
+          echo "version=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Generate updates.json using Tauri (With Signing)
+        run: |
           BASE_URL="https://github.com/$GITHUB_REPOSITORY/releases/download/v$VERSION"
 
-          # Windows paths
-          WIN_UPDATE="${BASE_URL}/Migurinth_${VERSION}_x64-setup.nsis.zip"
-          WIN_INSTALL="${BASE_URL}/Migurinth_${VERSION}_x64-setup.exe"
-
-          # macOS paths
-          MAC_UPDATE="${BASE_URL}/Migurinth_${VERSION}_universal.app.tar.gz"
-          MAC_INSTALL="${BASE_URL}/Migurinth_${VERSION}_universal.dmg"
-
-          # Linux paths
-          LINUX_UPDATE="${BASE_URL}/migurinth_${VERSION}_amd64.AppImage.tar.gz"
-          LINUX_DEB="${BASE_URL}/migurinth_${VERSION}_amd64.deb"
-          LINUX_RPM="${BASE_URL}/migurinth_${VERSION}_amd64.rpm"
-          LINUX_APPIMAGE="${BASE_URL}/migurinth_${VERSION}_amd64.AppImage"
-
-          # Generate updates.json
           tauri signer generate-update \
             -i artifacts/windows-latest \
             -i artifacts/macos-latest \
             -i artifacts/ubuntu-22.04 \
             --base-url $BASE_URL \
-            --windows-url "$WIN_UPDATE" \
-            --windows-install-url "$WIN_INSTALL" \
-            --macos-url "$MAC_UPDATE" \
-            --macos-install-url "$MAC_INSTALL" \
-            --linux-url "$LINUX_UPDATE" \
-            --linux-install-urls "$LINUX_DEB,$LINUX_RPM,$LINUX_APPIMAGE" \
-            -o updates.json
+            --windows-url "$BASE_URL/Migurinth_${VERSION}_x64-setup.nsis.zip" \
+            --windows-install-url "$BASE_URL/Migurinth_${VERSION}_x64-setup.exe" \
+            --macos-url "$BASE_URL/Migurinth_${VERSION}_universal.app.tar.gz" \
+            --macos-install-url "$BASE_URL/Migurinth_${VERSION}_universal.dmg" \
+            --linux-url "$BASE_URL/migurinth_${VERSION}_amd64.AppImage.tar.gz" \
+            --linux-install-urls "$BASE_URL/migurinth_${VERSION}_amd64.deb,$BASE_URL/migurinth_${VERSION}_amd64.rpm,$BASE_URL/migurinth_${VERSION}_amd64.AppImage" \
+            -o updates.json \
+            --signing-key "$TAURI_SIGNING_PRIVATE_KEY" \
+            --signing-key-password "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
 
       - name: Upload updates.json to release
         run: |
