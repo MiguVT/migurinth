@@ -245,12 +245,34 @@ jobs:
       - name: Generate updates.json
         run: |
           VERSION=$(jq -r '.version' apps/app/tauri.conf.json)
+          BASE_URL="https://github.com/$GITHUB_REPOSITORY/releases/download/v$VERSION"
 
-          # Generate updates.json for each platform
+          # Windows paths
+          WIN_UPDATE="${BASE_URL}/Migurinth_${VERSION}_x64-setup.nsis.zip"
+          WIN_INSTALL="${BASE_URL}/Migurinth_${VERSION}_x64-setup.exe"
+
+          # macOS paths
+          MAC_UPDATE="${BASE_URL}/Migurinth_${VERSION}_universal.app.tar.gz"
+          MAC_INSTALL="${BASE_URL}/Migurinth_${VERSION}_universal.dmg"
+
+          # Linux paths
+          LINUX_UPDATE="${BASE_URL}/migurinth_${VERSION}_amd64.AppImage.tar.gz"
+          LINUX_DEB="${BASE_URL}/migurinth_${VERSION}_amd64.deb"
+          LINUX_RPM="${BASE_URL}/migurinth_${VERSION}_amd64.rpm"
+          LINUX_APPIMAGE="${BASE_URL}/migurinth_${VERSION}_amd64.AppImage"
+
+          # Generate updates.json
           tauri signer generate-update \
             -i artifacts/windows-latest \
             -i artifacts/macos-latest \
             -i artifacts/ubuntu-22.04 \
+            --base-url $BASE_URL \
+            --windows-url "$WIN_UPDATE" \
+            --windows-install-url "$WIN_INSTALL" \
+            --macos-url "$MAC_UPDATE" \
+            --macos-install-url "$MAC_INSTALL" \
+            --linux-url "$LINUX_UPDATE" \
+            --linux-install-urls "$LINUX_DEB,$LINUX_RPM,$LINUX_APPIMAGE" \
             -o updates.json
 
       - name: Upload updates.json to release
@@ -258,64 +280,3 @@ jobs:
           gh release upload "v$VERSION" updates.json --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-generate-update-file:
-  needs: release
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v4
-
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts
-
-    - name: Install Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-
-    - name: Install pnpm and tauri-cli
-      run: |
-        corepack enable
-        corepack prepare --activate
-        pnpm install -g @tauri-apps/cli
-
-    - name: Generate updates.json
-      run: |
-        VERSION=$(jq -r '.version' apps/app/tauri.conf.json)
-        BASE_URL="https://github.com/$GITHUB_REPOSITORY/releases/download/v$VERSION"
-
-        # Windows paths
-        WIN_UPDATE="${BASE_URL}/Migurinth_${VERSION}_x64-setup.nsis.zip"
-        WIN_INSTALL="${BASE_URL}/Migurinth_${VERSION}_x64-setup.exe"
-
-        # macOS paths
-        MAC_UPDATE="${BASE_URL}/Migurinth_${VERSION}_universal.app.tar.gz"
-        MAC_INSTALL="${BASE_URL}/Migurinth_${VERSION}_universal.dmg"
-
-        # Linux paths
-        LINUX_UPDATE="${BASE_URL}/migurinth_${VERSION}_amd64.AppImage.tar.gz"
-        LINUX_DEB="${BASE_URL}/migurinth_${VERSION}_amd64.deb"
-        LINUX_RPM="${BASE_URL}/migurinth_${VERSION}_amd64.rpm"
-        LINUX_APPIMAGE="${BASE_URL}/migurinth_${VERSION}_amd64.AppImage"
-
-        # Generate updates.json
-        tauri signer generate-update \
-          -i artifacts/windows-latest \
-          -i artifacts/macos-latest \
-          -i artifacts/ubuntu-22.04 \
-          --base-url $BASE_URL \
-          --windows-url "$WIN_UPDATE" \
-          --windows-install-url "$WIN_INSTALL" \
-          --macos-url "$MAC_UPDATE" \
-          --macos-install-url "$MAC_INSTALL" \
-          --linux-url "$LINUX_UPDATE" \
-          --linux-install-urls "$LINUX_DEB,$LINUX_RPM,$LINUX_APPIMAGE" \
-          -o updates.json
-
-    - name: Upload updates.json to release
-      run: |
-        gh release upload "v$VERSION" updates.json --clobber
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
