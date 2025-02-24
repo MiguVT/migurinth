@@ -30,6 +30,7 @@ jobs:
         run: |
           VERSION=$(jq -r '.package.version' apps/app/tauri.conf.json)
           echo "version=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Check if version exists as tag
         id: check_tag
@@ -196,6 +197,8 @@ jobs:
 
       - name: Download existing updates.json from GitHub Release
         id: get_updates
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if gh release download v${{ env.version }} --pattern updates.json; then
             mv updates.json updates_old.json
