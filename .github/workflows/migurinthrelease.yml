@@ -265,13 +265,11 @@ jobs:
       - name: Install dependencies
         shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y jq patchelf
-          export SHELL=/bin/bash
-          corepack enable
-          corepack prepare --activate
+          export PNPM_HOME="$HOME/.pnpm-global"
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm config set global-bin-dir "$PNPM_HOME"
           pnpm setup
-          export PATH="$(pnpm bin -g):$PATH"
+          echo "Directorio global: $(pnpm bin -g)"
           pnpm install -g @tauri-apps/cli @tauri-apps/signer
 
       - name: Extract version
