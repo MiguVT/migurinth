@@ -13,7 +13,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERCMDY4OTQ0MzQ2REI3OTcKUldTWHQyMDBSSWtHMjZXVHRabVlHaXZCeWhlVkFDQUtVSURFRmozd1IvOWozRDhzWVQ1L0hiWkcK",
-      "endpoints": ["https://launcher-files.modrinth.com/updates.json"]
+      "endpoints": ["https://github.com/MiguVT/migurinth/releases/latest/download/updates.json"]
     }
   }
 }
