@@ -230,7 +230,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download all artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
@@ -247,20 +247,19 @@ jobs:
         shell: bash
         run: |
           set -e
-          # Define la URL base de descarga usando el repositorio y la versión
+          # URL base para descargas
           BASE_URL="https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}"
           UPDATES_JSON="updates.json"
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Define el mapeo de plataformas con sus archivos correspondientes.
-          # Se asume que para cada archivo de instalador existe un archivo de firma con el mismo nombre + ".sig" en la carpeta artifacts.
+          # Define las plataformas y sus archivos
           declare -A FILES=(
             ["windows"]="${BASE_URL}/Modrinth.App_${{ env.VERSION }}_x64-setup.exe"
             ["macos"]="${BASE_URL}/Modrinth.App_${{ env.VERSION }}_universal.dmg"
             ["linux"]="${BASE_URL}/Modrinth.App_${{ env.VERSION }}_amd64.deb"
           )
 
-          # Inicia el JSON con versión y fecha de publicación
+          # Comienza a construir el JSON
           echo '{' > $UPDATES_JSON
           echo '  "version": "'${{ env.VERSION }}'",' >> $UPDATES_JSON
           echo '  "pub_date": "'$PUB_DATE'",' >> $UPDATES_JSON
@@ -273,7 +272,7 @@ jobs:
             SIG_FILE="artifacts/${FILE_BASENAME}.sig"
             
             if [ ! -f "$SIG_FILE" ]; then
-              echo "⚠️ Archivo de firma no encontrado para $FILE_BASENAME ($SIG_FILE)" >&2
+              echo "⚠️ No se encontró el archivo de firma para $FILE_BASENAME ($SIG_FILE)" >&2
               continue
             fi
             
@@ -282,7 +281,7 @@ jobs:
             if [ $FIRST -eq 1 ]; then
               FIRST=0
             else
-              echo "    ," >> $UPDATES_JSON
+              echo '    ,' >> $UPDATES_JSON
             fi
             
             echo "    \"${platform}\": {" >> $UPDATES_JSON
