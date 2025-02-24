@@ -201,9 +201,9 @@ jobs:
             A new version of the **MiguRinth App** has been released! 🎉
 
             🚀 **Download & Install:**
-            - [![Windows](https://img.shields.io/badge/Install-Windows-blue?style=for-the-badge&logo=windows)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Migurinth_${{ env.version }}_x64-setup.exe)
-            - [![Mac](https://img.shields.io/badge/Install-MacOS-black?style=for-the-badge&logo=apple)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Migurinth_${{ env.version }}_universal.dmg)
-            - [![Ubuntu](https://img.shields.io/badge/Install-Ubuntu-orange?style=for-the-badge&logo=ubuntu)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/migurinth_${{ env.version }}_amd64.deb)
+            - [![Windows](https://img.shields.io/badge/Install-Windows-blue?style=for-the-badge&logo=windows)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Modrinth.App_${{ env.version }}_x64-setup.exe)
+            - [![Mac](https://img.shields.io/badge/Install-MacOS-black?style=for-the-badge&logo=apple)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Modrinth.App_${{ env.version }}_universal.dmg)
+            - [![Ubuntu](https://img.shields.io/badge/Install-Ubuntu-orange?style=for-the-badge&logo=ubuntu)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Modrinth.App_${{ env.version }}_amd64.deb)
 
           draft: false
           prerelease: false
@@ -289,12 +289,12 @@ jobs:
             -i artifacts/macos-latest \
             -i artifacts/ubuntu-22.04 \
             --base-url $BASE_URL \
-            --windows-url "$BASE_URL/Migurinth_${VERSION}_x64-setup.nsis.zip" \
-            --windows-install-url "$BASE_URL/Migurinth_${VERSION}_x64-setup.exe" \
-            --macos-url "$BASE_URL/Migurinth_${VERSION}_universal.app.tar.gz" \
-            --macos-install-url "$BASE_URL/Migurinth_${VERSION}_universal.dmg" \
-            --linux-url "$BASE_URL/migurinth_${VERSION}_amd64.AppImage.tar.gz" \
-            --linux-install-urls "$BASE_URL/migurinth_${VERSION}_amd64.deb,$BASE_URL/migurinth_${VERSION}_amd64.rpm,$BASE_URL/migurinth_${VERSION}_amd64.AppImage" \
+            --windows-url "$BASE_URL/Modrinth.App_${VERSION}_x64-setup.nsis.zip" \
+            --windows-install-url "$BASE_URL/Modrinth.App_${VERSION}_x64-setup.exe" \
+            --macos-url "$BASE_URL/Modrinth.App_${VERSION}_universal.app.tar.gz" \
+            --macos-install-url "$BASE_URL/Modrinth.App_${VERSION}_universal.dmg" \
+            --linux-url "$BASE_URL/Modrinth.App_${VERSION}_amd64.AppImage.tar.gz" \
+            --linux-install-urls "$BASE_URL/Modrinth.App_${VERSION}_amd64.deb,$BASE_URL/Modrinth.App_${VERSION}_amd64.rpm,$BASE_URL/Modrinth.App_${VERSION}_amd64.AppImage" \
             -o updates.json \
             --signing-key "$TAURI_SIGNING_PRIVATE_KEY" \
             --signing-key-password "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
