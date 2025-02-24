@@ -1,0 +1,126 @@
+name: 'Modrinth App build'
+
+on:
+  push:
+    branches:
+      - prod
+    tags:
+      - 'v*'
+    paths:
+      - .github/workflows/app-release.yml
+      - 'apps/app/**'
+      - 'apps/app-frontend/**'
+      - 'packages/app-lib/**'
+      - 'packages/app-macros/**'
+      - 'packages/assets/**'
+      - 'packages/ui/**'
+      - 'packages/utils/**'
+  workflow_dispatch:
+
+jobs:
+  check_version:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tauri.conf.json
+        id: check
+        run: |
+          VERSION=$(jq -r '.package.version' apps/app/tauri.conf.json)
+          echo "version=$VERSION" >> $GITHUB_ENV
+
+      - name: Check if version exists as tag
+        id: check_tag
+        run: |
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "Version $VERSION already exists. Skipping release."
+            exit 1
+
+  build:
+    needs: check_version
+    if: success()
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-latest, windows-latest, ubuntu-22.04]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Install jq (Ubuntu only)
+        if: startsWith(matrix.platform, 'ubuntu')
+        run: sudo apt-get install -y jq
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Build app
+        run: pnpm --filter=@modrinth/app run tauri build --config "tauri-release.conf.json"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}
+          path: |
+            target/release/bundle/**/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(jq -r '.package.version' apps/app/tauri.conf.json)
+          echo "version=$VERSION" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.version }}
+          name: Release v${{ env.version }}
+          body: "A new version of the Modrinth App has been released!"
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download existing updates.json from GitHub Release
+        id: get_updates
+        run: |
+          if gh release download v${{ env.version }} --pattern updates.json; then
+            mv updates.json updates_old.json
+            echo "Existing updates.json found in release."
+          else
+            echo '{"platforms": {}}' > updates_old.json
+            echo "No previous updates.json found, creating a new one."
+          fi
+
+      - name: Generate new updates.json
+        id: generate_updates
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%S.%NZ")
+          jq --arg version "$VERSION" --arg timestamp "$TIMESTAMP" '.version=$version | .pub_date=$timestamp' updates_old.json > updates.json
+
+      - name: Upload updates.json to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./updates.json
+          asset_name: updates.json
+          asset_content_type: application/json
