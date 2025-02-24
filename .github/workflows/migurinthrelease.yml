@@ -237,7 +237,11 @@ jobs:
           node-version: 20
 
       - name: Install pnpm and tauri-cli
+        shell: bash
         run: |
+          export PNPM_HOME="$HOME/.local/share/pnpm"
+          echo "$PNPM_HOME" >> $GITHUB_PATH
+          mkdir -p "$PNPM_HOME"
           corepack enable
           corepack prepare --activate
           pnpm install -g @tauri-apps/cli
