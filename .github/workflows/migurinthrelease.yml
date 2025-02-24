@@ -262,14 +262,28 @@ jobs:
         with:
           node-version: lts/*
 
-      - name: Install dependencies
+      - name: Setup PNPM and install global dependencies
         shell: bash
         run: |
+          # Actualiza e instala dependencias del sistema
+          sudo apt-get update
+          sudo apt-get install -y jq patchelf
+          export SHELL=/bin/bash
+
+          # Activa y prepara Corepack (esto habilita pnpm)
+          corepack enable
+          corepack prepare --activate
+
+          # Ahora configura el directorio global para pnpm
           export PNPM_HOME="$HOME/.pnpm-global"
           export PATH="$PNPM_HOME:$PATH"
           pnpm config set global-bin-dir "$PNPM_HOME"
+
+          # Configura pnpm (crea el directorio si es necesario)
           pnpm setup
           echo "Directorio global: $(pnpm bin -g)"
+
+          # Instala las herramientas globales necesarias
           pnpm install -g @tauri-apps/cli @tauri-apps/signer
 
       - name: Extract version
