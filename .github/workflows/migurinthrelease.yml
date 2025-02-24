@@ -197,7 +197,14 @@ jobs:
         with:
           tag_name: v${{ env.version }}
           name: Release v${{ env.version }}
-          body: 'A new version of the MiguRinth App has been released!'
+          body: |
+            A new version of the **MiguRinth App** has been released! 🎉
+
+            🚀 **Download & Install:**
+            - [![Windows](https://img.shields.io/badge/Install-Windows-blue?style=for-the-badge&logo=windows)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Migurinth_${{ env.version }}_x64-setup.exe)
+            - [![Mac](https://img.shields.io/badge/Install-MacOS-black?style=for-the-badge&logo=apple)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Migurinth_${{ env.version }}_universal.dmg)
+            - [![Ubuntu](https://img.shields.io/badge/Install-Ubuntu-orange?style=for-the-badge&logo=ubuntu)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/migurinth_${{ env.version }}_amd64.deb)
+
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -261,7 +268,8 @@ jobs:
           sudo apt-get install -y jq patchelf
           corepack enable
           corepack prepare --activate
-          pnpm install
+          pnpm setup
+          export PATH="$(pnpm bin -g):$PATH"
           pnpm install -g @tauri-apps/cli @tauri-apps/signer
 
       - name: Extract version
