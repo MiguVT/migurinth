@@ -279,6 +279,8 @@ jobs:
             
             if [ ! -f "$SIG_FILE" ]; then
               echo "⚠️ No se encontró el archivo de firma para ${COMPRESSED_FILE} ($SIG_FILE)" >&2
+              echo "⚠️ Lista de archivos en artifacts:" >&2
+              ls -laR artifacts
               continue
             fi
             
