@@ -296,8 +296,10 @@ jobs:
       - name: Generate updates.json using Tauri (With Signing)
         shell: bash
         run: |
+          TAURI_BIN="$(pnpm bin -g)/tauri"
+          echo "Using Tauri binary at: $TAURI_BIN"
           BASE_URL="https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}"
-          tauri signer generate-update \
+          $TAURI_BIN signer generate-update \
             -i artifacts/windows-latest \
             -i artifacts/macos-latest \
             -i artifacts/ubuntu-22.04 \
