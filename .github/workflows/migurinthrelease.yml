@@ -266,6 +266,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y jq patchelf
+          export SHELL=/bin/bash
           corepack enable
           corepack prepare --activate
           pnpm setup
