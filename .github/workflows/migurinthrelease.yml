@@ -1,4 +1,4 @@
-name: 'Modrinth App build'
+name: 'Migurinth App release'
 
 on:
   push:
