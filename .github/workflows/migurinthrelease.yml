@@ -107,7 +107,7 @@ jobs:
         shell: bash
         run: |
           corepack enable
-          corepack prepare pnpm@latest --activate
+          corepack prepare --activate
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -241,19 +241,6 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@latest --activate
-
-          # Setup PNPM properly
-          pnpm setup
-
-          # Ensure PNPM_HOME is in PATH
-          export PNPM_HOME="$HOME/.local/share/pnpm"
-          export PATH="$PNPM_HOME:$PATH"
-
-          echo "export PNPM_HOME=$PNPM_HOME" >> $GITHUB_ENV
-          echo "export PATH=$PNPM_HOME:$PATH" >> $GITHUB_ENV
-
-          # Now install Tauri CLI globally
-          pnpm install -g @tauri-apps/cli
 
       - name: Generate updates.json
         run: |
