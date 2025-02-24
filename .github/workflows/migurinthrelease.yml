@@ -183,6 +183,7 @@ jobs:
         run: |
           VERSION=$(jq -r '.version' apps/app/tauri.conf.json)
           echo "version=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         id: create_release
