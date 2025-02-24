@@ -296,6 +296,8 @@ jobs:
       - name: Generate updates.json using Tauri (With Signing)
         shell: bash
         run: |
+          export PNPM_HOME="$HOME/.pnpm-global"
+          export PATH="$PNPM_HOME:$PATH"
           TAURI_BIN="$(pnpm bin -g)/tauri"
           echo "Using Tauri binary at: $TAURI_BIN"
           BASE_URL="https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}"
