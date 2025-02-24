@@ -263,6 +263,7 @@ jobs:
           node-version: lts/*
 
       - name: Install dependencies
+        shell: bash
         run: |
           sudo apt-get update
           sudo apt-get install -y jq patchelf
@@ -275,32 +276,35 @@ jobs:
 
       - name: Extract version
         id: extract_version
+        shell: bash
         run: |
           VERSION=$(jq -r '.version' apps/app/tauri.conf.json)
-          echo "version=$VERSION" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Generate updates.json using Tauri (With Signing)
+        shell: bash
         run: |
-          BASE_URL="https://github.com/$GITHUB_REPOSITORY/releases/download/v$VERSION"
-
+          BASE_URL="https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}"
           tauri signer generate-update \
             -i artifacts/windows-latest \
             -i artifacts/macos-latest \
             -i artifacts/ubuntu-22.04 \
-            --base-url $BASE_URL \
-            --windows-url "$BASE_URL/Modrinth.App_${VERSION}_x64-setup.nsis.zip" \
-            --windows-install-url "$BASE_URL/Modrinth.App_${VERSION}_x64-setup.exe" \
-            --macos-url "$BASE_URL/Modrinth.App_${VERSION}_universal.app.tar.gz" \
-            --macos-install-url "$BASE_URL/Modrinth.App_${VERSION}_universal.dmg" \
-            --linux-url "$BASE_URL/Modrinth.App_${VERSION}_amd64.AppImage.tar.gz" \
-            --linux-install-urls "$BASE_URL/Modrinth.App_${VERSION}_amd64.deb,$BASE_URL/Modrinth.App_${VERSION}_amd64.rpm,$BASE_URL/Modrinth.App_${VERSION}_amd64.AppImage" \
+            --base-url "$BASE_URL" \
+            --windows-url "$BASE_URL/Modrinth.App_${{ env.VERSION }}_x64-setup.nsis.zip" \
+            --windows-install-url "$BASE_URL/Modrinth.App_${{ env.VERSION }}_x64-setup.exe" \
+            --macos-url "$BASE_URL/Modrinth.App_${{ env.VERSION }}_universal.app.tar.gz" \
+            --macos-install-url "$BASE_URL/Modrinth.App_${{ env.VERSION }}_universal.dmg" \
+            --linux-url "$BASE_URL/Modrinth.App_${{ env.VERSION }}_amd64.AppImage.tar.gz" \
+            --linux-install-urls "$BASE_URL/Modrinth.App_${{ env.VERSION }}_amd64.deb,$BASE_URL/Modrinth.App_${{ env.VERSION }}_amd64.rpm,$BASE_URL/Modrinth.App_${{ env.VERSION }}_amd64.AppImage" \
             -o updates.json \
             --signing-key "$TAURI_SIGNING_PRIVATE_KEY" \
             --signing-key-password "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
 
       - name: Upload updates.json to release
-        run: |
-          gh release upload "v$VERSION" updates.json --clobber
+        shell: bash
+        run: gh release upload "v${{ env.VERSION }}" updates.json --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
