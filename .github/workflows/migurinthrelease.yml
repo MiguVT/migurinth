@@ -252,27 +252,32 @@ jobs:
           UPDATES_JSON="updates.json"
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Define las plataformas y sus archivos
-          declare -A FILES=(
-            ["windows"]="${BASE_URL}/Modrinth.App_${{ env.VERSION }}_x64-setup.exe"
-            ["macos"]="${BASE_URL}/Modrinth.App_${{ env.VERSION }}_universal.dmg"
-            ["linux"]="${BASE_URL}/Modrinth.App_${{ env.VERSION }}_amd64.deb"
+          # Define la estructura para cada plataforma:
+          # Formato: "plataforma"="<archivo_comprimido>;<archivo_instalacion1>,<archivo_instalacion2>,..."
+          declare -A PLATFORMS=(
+            ["linux-x86_64"]="Modrinth.App_${{ env.VERSION }}_amd64.AppImage.tar.gz;Modrinth.App_${{ env.VERSION }}_amd64.deb,Modrinth.App_${{ env.VERSION }}_amd64.AppImage,Modrinth.App_${{ env.VERSION }}_amd64.rpm"
+            ["windows-x86_64"]="Modrinth.App_${{ env.VERSION }}_x64-setup.nsis.zip;Modrinth.App_${{ env.VERSION }}_x64-setup.exe"
+            ["darwin-x86_64"]="Modrinth.App.app.tar.gz;Modrinth.App_${{ env.VERSION }}_universal.dmg"
           )
 
           # Comienza a construir el JSON
           echo '{' > $UPDATES_JSON
           echo '  "version": "'${{ env.VERSION }}'",' >> $UPDATES_JSON
+          echo '  "notes": "A new version of the Modrinth App has been released!",' >> $UPDATES_JSON
           echo '  "pub_date": "'$PUB_DATE'",' >> $UPDATES_JSON
           echo '  "platforms": {' >> $UPDATES_JSON
 
           FIRST=1
-          for platform in "${!FILES[@]}"; do
-            FILE_URL="${FILES[$platform]}"
-            FILE_BASENAME=$(basename "$FILE_URL")
-            SIG_FILE="artifacts/${FILE_BASENAME}.sig"
+          for platform in "${!PLATFORMS[@]}"; do
+            ENTRY="${PLATFORMS[$platform]}"
+            # Divide ENTRY en dos partes separadas por ";"
+            COMPRESSED_FILE=$(echo "$ENTRY" | cut -d';' -f1)
+            INSTALL_FILES=$(echo "$ENTRY" | cut -d';' -f2)
+            FILE_URL="${BASE_URL}/${COMPRESSED_FILE}"
+            SIG_FILE="artifacts/${COMPRESSED_FILE}.sig"
             
             if [ ! -f "$SIG_FILE" ]; then
-              echo "⚠️ No se encontró el archivo de firma para $FILE_BASENAME ($SIG_FILE)" >&2
+              echo "⚠️ No se encontró el archivo de firma para ${COMPRESSED_FILE} ($SIG_FILE)" >&2
               continue
             fi
             
@@ -281,12 +286,28 @@ jobs:
             if [ $FIRST -eq 1 ]; then
               FIRST=0
             else
-              echo '    ,' >> $UPDATES_JSON
+              echo "    ," >> $UPDATES_JSON
             fi
             
             echo "    \"${platform}\": {" >> $UPDATES_JSON
             echo "      \"url\": \"${FILE_URL}\"," >> $UPDATES_JSON
-            echo "      \"signature\": \"${SIGNATURE}\"" >> $UPDATES_JSON
+            echo "      \"signature\": \"${SIGNATURE}\"," >> $UPDATES_JSON
+            echo "      \"install_urls\": [" >> $UPDATES_JSON
+            
+            # Separa INSTALL_FILES por comas y recorre cada uno
+            IFS=',' read -ra URLS <<< "$INSTALL_FILES"
+            FIRST_URL=1
+            for url_file in "${URLS[@]}"; do
+              INSTALL_URL="${BASE_URL}/${url_file}"
+              if [ $FIRST_URL -eq 1 ]; then
+                FIRST_URL=0
+              else
+                echo "        ," >> $UPDATES_JSON
+              fi
+              echo "        \"${INSTALL_URL}\"" >> $UPDATES_JSON
+            done
+            
+            echo "      ]" >> $UPDATES_JSON
             echo "    }" >> $UPDATES_JSON
           done
 
