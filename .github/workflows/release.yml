@@ -124,6 +124,19 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
+      # Clean all the previous build files
+      - name: Clean build files
+        if: startsWith(matrix.platform, 'windows')
+        run: rmdir /s /q target
+
+      - name: Clean build files
+        if: startsWith(matrix.platform, 'macos')
+        run: rm -rf target
+
+      - name: Clean build files
+        if: startsWith(matrix.platform, 'ubuntu')
+        run: rm -rf target
+
       - name: build app (macos)
         run: pnpm --filter=@modrinth/app run tauri build --target universal-apple-darwin --config "tauri-release.conf.json"
         if: startsWith(matrix.platform, 'macos')
@@ -195,12 +208,12 @@ jobs:
           tag_name: v${{ env.version }}
           name: Release v${{ env.version }}
           body: |
-            A new version of the **MiguRinth App** has been released! 🎉
+            A new version of the **MiguRinth** has been released! 🎉
 
             🚀 **Download & Install:**
-            - [![Windows](https://img.shields.io/badge/Install-Windows-blue?style=for-the-badge&logo=windows)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Modrinth.App_${{ env.version }}_x64-setup.exe)
-            - [![Mac](https://img.shields.io/badge/Install-MacOS-black?style=for-the-badge&logo=apple)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Modrinth.App_${{ env.version }}_universal.dmg)
-            - [![Ubuntu](https://img.shields.io/badge/Install-Ubuntu-orange?style=for-the-badge&logo=ubuntu)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Modrinth.App_${{ env.version }}_amd64.deb)
+            - [![Windows](https://img.shields.io/badge/Install-Windows-blue?style=for-the-badge&logo=windows)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Migurinth_${{ env.version }}_x64-setup.exe)
+            - [![Mac](https://img.shields.io/badge/Install-MacOS-black?style=for-the-badge&logo=apple)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Migurinth_${{ env.version }}_universal.dmg)
+            - [![Ubuntu](https://img.shields.io/badge/Install-Ubuntu-orange?style=for-the-badge&logo=ubuntu)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Migurinth_${{ env.version }}_amd64.deb)
 
           draft: false
           prerelease: false
