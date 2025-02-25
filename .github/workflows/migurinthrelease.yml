@@ -272,7 +272,7 @@ jobs:
             COMPRESSED_FILE=$(echo "$ENTRY" | cut -d';' -f1)
             INSTALL_FILES=$(echo "$ENTRY" | cut -d';' -f2)
 
-            COMPRESSED_URL="${BASE_URL}/$(basename "$COMPRESSED_FILE")"
+            COMPRESSED_URL="${BASE_URL}/$(basename "$COMPRESSED_FILE" | tr ' ' '.')"
             SIG_FILE="artifacts/${COMPRESSED_FILE}.sig"
 
             if [ ! -f "$SIG_FILE" ]; then
@@ -288,7 +288,7 @@ jobs:
             INSTALL_URLS_JSON=""
             FIRST_URL=1
             for f in "${INSTALL_ARRAY[@]}"; do
-              URL="${BASE_URL}/$(basename "$f")"
+              URL="${BASE_URL}/$(basename "$f" | tr ' ' '.')"
               if [ $FIRST_URL -eq 1 ]; then
                 INSTALL_URLS_JSON="\"${URL}\""
                 FIRST_URL=0
