@@ -6,11 +6,11 @@
         <array>
             <dict>
                 <key>CFBundleURLName</key>
-                <string>ModrinthApp</string>
+                <string>Migurinth</string>
                 <key>CFBundleURLSchemes</key>
                 <array>
-                    <string>modrinth</string>
-                    <string>modrinthscheme</string>
+                    <string>migurinth</string>
+                    <string>migurinthscheme</string>
                 </array>
             </dict>
         </array>

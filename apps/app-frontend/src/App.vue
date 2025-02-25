@@ -20,7 +20,6 @@ import {
 } from '@modrinth/assets'
 import { Avatar, Button, ButtonStyled, Notifications, OverflowMenu } from '@modrinth/ui'
 import { useLoading, useTheming } from '@/store/state'
-import ModrinthAppLogo from '@/assets/modrinth_app.svg?component'
 import AccountsCard from '@/components/ui/AccountsCard.vue'
 import InstanceCreationModal from '@/components/ui/InstanceCreationModal.vue'
 import { get } from '@/helpers/settings'
@@ -243,13 +242,7 @@ async function logOut() {
   await fetchCredentials()
 }
 
-const MIDAS_BITFLAG = 1 << 0
-const hasPlus = computed(
-  () =>
-    credentials.value &&
-    credentials.value.user &&
-    (credentials.value.user.badges & MIDAS_BITFLAG) === MIDAS_BITFLAG,
-)
+const hasPlus = ref(true)
 
 const sidebarToggled = ref(true)
 
@@ -437,8 +430,7 @@ function handleAuxClick(e) {
     </div>
     <div data-tauri-drag-region class="app-grid-statusbar bg-bg-raised h-[--top-bar-height] flex">
       <div data-tauri-drag-region class="flex p-3">
-        <ModrinthAppLogo class="h-full w-auto text-contrast pointer-events-none" />
-        <div class="flex items-center gap-1 ml-3">
+        <div class="flex items-center gap-1">
           <button
             class="cursor-pointer p-0 m-0 border-none outline-none bg-button-bg rounded-full flex items-center justify-center w-6 h-6 hover:brightness-75 transition-all"
             @click="router.back()"

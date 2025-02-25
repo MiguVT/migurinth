@@ -1,39 +1,79 @@
-# ![Modrinth Monorepo Cover](/.github/assets/monorepo_cover.png)
+---
 
-![Issues](https://img.shields.io/github/issues-raw/Modrinth/code?color=c78aff&label=issues&style=for-the-badge)
-![Pull Requests](https://img.shields.io/github/issues-pr-raw/Modrinth/code?color=c78aff&label=PRs&style=for-the-badge)
-![Contributors](https://img.shields.io/github/contributors/Modrinth/code?color=c78aff&label=contributors&style=for-the-badge)
-![Lines](https://img.shields.io/endpoint?url=https://ghloc.vercel.app/api/modrinth/code/badge?style=flat&logoColor=white&color=c78aff&style=for-the-badge)
-![Commit Activity](https://img.shields.io/github/commit-activity/m/Modrinth/code?color=c78aff&label=commits&style=for-the-badge)
-![Last Commit](https://img.shields.io/github/last-commit/Modrinth/code?color=c78aff&label=last%20commit&style=for-the-badge)
+# 🌱 **Migurinth**
 
-## Modrinth Monorepo
+[![Latest Release](https://img.shields.io/github/v/release/miguvt/migurinth?color=brightgreen&label=Latest%20Release)](https://github.com/miguvt/migurinth/releases)
 
-Welcome to the Modrinth Monorepo, the primary codebase for the Modrinth web interface and app. It contains ![Lines](https://img.shields.io/endpoint?url=https://ghloc.vercel.app/api/modrinth/olympus/badge?logoColor=white&color=black&label=) lines of code and has ![Contributors](https://img.shields.io/github/contributors/Modrinth/code?color=black&label=) contributors!
+> **Migurinth** is an independent fork of the original Modrinth App, offering a **cleaner, privacy-focused experience** by removing telemetry and ads.  
+> This project is **not affiliated** with or **endorsed by Modrinth**.
 
-If you're not a developer and you've stumbled upon this repository, you can access the web interface on the [Modrinth website](https://modrinth.com) and download the latest release of the app [here](https://modrinth.com/app).
+---
 
-## Development
+## 🚀 **Why Choose Migurinth?**
 
-This repository contains two primary packages. For detailed development information, please refer to their respective READMEs:
+### ✨ **Features**
 
-- [Web Interface](apps/frontend/README.md)
-- [Desktop App](apps/app/README.md)
+- **No Telemetry**: Enjoy your privacy—no data tracking or analytics.
+- **Ad-Free Experience**: No intrusive ads for a clean and distraction-free experience.
+- **Same Build Process**: Uses the same build and update system as the original Modrinth app for full compatibility.
 
-## Contributing
+---
 
-We welcome contributions! Before submitting any contributions, please read our [contributing guidelines](https://docs.modrinth.com/contributing/getting-started/).
+## 📥 **Download & Installation**
 
-If you plan to fork this repository for your own purposes, please review our [copying guidelines](COPYING.md).
+You can download the latest version of Migurinth from the [**Releases**](https://github.com/miguvt/migurinth/releases) page.
 
-## Security
+### **Installation Instructions**
 
-If you discover a security vulnerability within our codebase, please follow our [responsible disclosure guidelines](https://modrinth.com/legal/security).
+1. **Windows:**
 
-## Support
+   - Click "INSTALL WINDOWS"
+   - Run the installer and follow the prompts.
 
-If you need help with the Modrinth web interface or app, please visit our [support page](https://support.modrinth.com). For general inquiries, you can also join our [Discord server](https://discord.modrinth.com).
+2. **macOS:**
 
-## License
+   - Click "INSTALL MACOS"
+   - Open the `.dmg` and drag Migurinth into the **Applications** folder.
 
-All packages in this repository are licensed under their respective licenses. Refer to the LICENSE file in each package for more information.
+3. **Linux:**
+   - Download the appropriate `.AppImage`, `.deb`, or `.rpm` package.
+   - Follow your distribution’s standard installation procedure.
+   - For AppImage, make it executable with:
+     ```bash
+     chmod +x Migurinth.AppImage
+     ./Migurinth.AppImage
+     ```
+
+---
+
+## 🌟 **What Makes Migurinth Different?**
+
+| Feature            | Original Modrinth | **Migurinth**                  | Other Forks         |
+| ------------------ | ----------------- | ------------------------------ | ------------------- |
+| Telemetry          | Enabled           | **Disabled**                   | Sometimes enabled   |
+| Ads                | Supported         | **No Ads**                     | Often present       |
+| Build Process      | Standard          | **Same as Original**           | Often modified      |
+| User Experience    | Standard          | **Cleaner (No Ads/Telemetry)** | Sometimes intrusive |
+| Auto-Update System | Standard          | **Same as Original**           | Inconsistent        |
+
+Migurinth was created to provide a **clean, privacy-friendly experience** without sacrificing usability or performance.
+
+---
+
+## 📄 **License**
+
+Migurinth is based on the original Modrinth App, which is licensed under the [AGPL-3.0 License](https://github.com/modrinth/code/blob/main/apps/app/LICENSE).  
+This fork makes non-intrusive changes focused on removing telemetry and ads for a better user experience.
+
+---
+
+## ⚠️ **Disclaimer**
+
+Migurinth is an **independent fork** and is **not affiliated** with or **endorsed by Modrinth**.  
+This project was created for a better experience without telemetry, ads, or intrusive features.
+
+---
+
+## 📧 **Contact**
+
+Have questions or feedback? Feel free to open an issue or reach out on [GitHub](https://github.com/miguvt/migurinth).

@@ -43,10 +43,10 @@
       }
     ]
   },
-  "productName": "Modrinth App",
-  "version": "0.9.3",
-  "mainBinaryName": "Modrinth App",
-  "identifier": "ModrinthApp",
+  "productName": "Migurinth",
+  "version": "0.9.3+101",
+  "mainBinaryName": "Migurinth",
+  "identifier": "Migurinth",
   "plugins": {
     "deep-link": {
       "desktop": {
@@ -65,7 +65,7 @@
         "fullscreen": false,
         "height": 800,
         "resizable": true,
-        "title": "Modrinth App",
+        "title": "Migurinth",
         "width": 1280,
         "minHeight": 700,
         "minWidth": 1100,

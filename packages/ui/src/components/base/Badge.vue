@@ -4,7 +4,7 @@
 
     <!-- User roles -->
     <template v-else-if="type === 'admin'">
-      <ModrinthIcon aria-hidden="true" /> {{ formatMessage(messages.modrinthTeamLabel) }}
+      <CrownIcon aria-hidden="true" /> {{ formatMessage(messages.modrinthTeamLabel) }}
     </template>
     <template v-else-if="type === 'moderator'">
       <ScaleIcon aria-hidden="true" /> {{ formatMessage(messages.moderatorLabel) }}
@@ -76,7 +76,6 @@
 
 <script setup lang="ts">
 import {
-  ModrinthIcon,
   ScaleIcon,
   BoxIcon,
   ListIcon,
@@ -88,6 +87,7 @@ import {
   CheckIcon,
   LockIcon,
   CalendarIcon,
+  CrownIcon,
 } from '@modrinth/assets'
 import { capitalizeString } from '@modrinth/utils'
 import { useVIntl, defineMessages } from '@vintl/vintl'

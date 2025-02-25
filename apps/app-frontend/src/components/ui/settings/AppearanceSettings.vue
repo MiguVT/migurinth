@@ -20,7 +20,7 @@ watch(
 </script>
 <template>
   <h2 class="m-0 text-lg font-extrabold text-contrast">Color theme</h2>
-  <p class="m-0 mt-1">Select your preferred color theme for Modrinth App.</p>
+  <p class="m-0 mt-1">Select your preferred color theme for Migurinth.</p>
 
   <ThemeSelector
     :update-color-theme="

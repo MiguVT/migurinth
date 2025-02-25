@@ -65,7 +65,7 @@ async fn initialize_state(app: tauri::AppHandle) -> api::Result<()> {
                     current_version: update.current_version.clone(),
                 },
                 1.0,
-                "Updating Modrinth App...",
+                "Updating Migurinth...",
             )
             .await?;
 
@@ -169,7 +169,7 @@ fn main() {
     */
     let _log_guard = theseus::start_logger();
 
-    tracing::info!("Initialized tracing subscriber. Loading Modrinth App!");
+    tracing::info!("Initialized tracing subscriber. Loading Migurinth!");
 
     let mut builder = tauri::Builder::default();
 
@@ -325,7 +325,7 @@ fn main() {
                     MessageDialog::new()
                         .set_type(MessageType::Error)
                         .set_title("Initialization error")
-                        .set_text("Your Microsoft Edge WebView2 installation is corrupt.\n\nMicrosoft Edge WebView2 is required to run Modrinth App.\n\nLearn how to repair it at https://support.modrinth.com/en/articles/8797765-corrupted-microsoft-edge-webview2-installation")
+                        .set_text("Your Microsoft Edge WebView2 installation is corrupt.\n\nMicrosoft Edge WebView2 is required to run Migurinth.\n\nLearn how to repair it at https://support.modrinth.com/en/articles/8797765-corrupted-microsoft-edge-webview2-installation")
                         .show_alert()
                         .unwrap();
 

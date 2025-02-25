@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   ReportIcon,
-  ModrinthIcon,
   ShieldIcon,
   SettingsIcon,
   GaugeIcon,
@@ -142,11 +141,9 @@ function devModeCount() {
               class="p-0 m-0 bg-transparent border-none cursor-pointer button-animation"
               :class="{ 'text-brand': themeStore.devMode, 'text-secondary': !themeStore.devMode }"
               @click="devModeCount"
-            >
-              <ModrinthIcon class="w-6 h-6" />
-            </button>
+            ></button>
             <div>
-              <p class="m-0">Modrinth App {{ version }}</p>
+              <p class="m-0">Migurinth {{ version }}</p>
               <p class="m-0">
                 <span v-if="osPlatform === 'macos'">MacOS</span>
                 <span v-else class="capitalize">{{ osPlatform }}</span>
