@@ -228,7 +228,8 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -243,26 +244,24 @@ jobs:
           VERSION=$(jq -r '.version' apps/app/tauri.conf.json)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Generate updates.json manually
+      - name: Generate updates.json
         shell: bash
         run: |
           set -e
-          # Construye la URL base a partir del repo y la versión
-          BASE_URL="https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}"
+          VERSION="${{ env.VERSION }}"
+          BASE_URL="https://github.com/MiguVT/migurinth/releases/download/v${VERSION}"
           UPDATES_JSON="updates.json"
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Define el mapeo para cada plataforma en el formato:
-          # "platform": "compressed_file;install_file1,install_file2,..."
           declare -A PLATFORMS=(
-            ["linux-x86_64"]="Modrinth.App_${{ env.VERSION }}_amd64.AppImage.tar.gz;Modrinth.App_${{ env.VERSION }}_amd64.deb,Modrinth.App_${{ env.VERSION }}_amd64.AppImage,Modrinth.App_${{ env.VERSION }}_amd64.rpm"
-            ["windows-x86_64"]="Modrinth.App_${{ env.VERSION }}_x64-setup.nsis.zip;Modrinth.App_${{ env.VERSION }}_x64-setup.exe"
-            ["darwin-x86_64"]="Modrinth.App.app.tar.gz;Modrinth.App_${{ env.VERSION }}_universal.dmg"
+            ["linux-x86_64"]="Modrinth.App_${VERSION}_amd64.AppImage.tar.gz;Modrinth.App_${VERSION}_amd64.deb,Modrinth.App_${VERSION}_amd64.AppImage,Modrinth.App-${VERSION}-1.x86_64.rpm"
+            ["windows-x86_64"]="Modrinth.App_${VERSION}_x64-setup.nsis.zip;Modrinth.App_${VERSION}_x64-setup.exe,Modrinth.App_${VERSION}_x64_en-US.msi"
+            ["darwin-x86_64"]="Modrinth.App.app.tar.gz;Modrinth.App_${VERSION}_universal.dmg"
+            ["darwin-aarch64"]="Modrinth.App.app.tar.gz;Modrinth.App_${VERSION}_universal.dmg"
           )
 
-          # Inicia la construcción del JSON
           echo '{' > $UPDATES_JSON
-          echo '  "version": "'${{ env.VERSION }}'",' >> $UPDATES_JSON
+          echo '  "version": "'${VERSION}'",' >> $UPDATES_JSON
           echo '  "notes": "A new version of the Modrinth App has been released!",' >> $UPDATES_JSON
           echo '  "pub_date": "'$PUB_DATE'",' >> $UPDATES_JSON
           echo '  "platforms": {' >> $UPDATES_JSON
@@ -270,23 +269,21 @@ jobs:
           FIRST=1
           for platform in "${!PLATFORMS[@]}"; do
             ENTRY="${PLATFORMS[$platform]}"
-            # Divide ENTRY en dos partes: primero el archivo comprimido, luego la lista de archivos de instalación
             COMPRESSED_FILE=$(echo "$ENTRY" | cut -d';' -f1)
             INSTALL_FILES=$(echo "$ENTRY" | cut -d';' -f2)
             
             COMPRESSED_URL="${BASE_URL}/${COMPRESSED_FILE}"
-            SIG_FILE="artifacts/${COMPRESSED_FILE}.sig"
+            SIG_FILE="artifacts/release/bundle/${platform}/${COMPRESSED_FILE}.sig"
             
             if [ ! -f "$SIG_FILE" ]; then
-              echo "⚠️ No se encontró el archivo de firma para ${COMPRESSED_FILE} ($SIG_FILE)" >&2
-              echo "⚠️ Lista de archivos en artifacts:" >&2
-              ls -laR artifacts
+              echo "⚠️ No signature found for ${COMPRESSED_FILE} ($SIG_FILE)" >&2
+              echo "⚠️ Available files:" >&2
+              ls -laR artifacts/release/bundle/${platform}
               continue
             fi
             
             SIGNATURE=$(cat "$SIG_FILE" | tr -d '\n')
             
-            # Construir el arreglo de install_urls
             IFS=',' read -ra INSTALL_ARRAY <<< "$INSTALL_FILES"
             INSTALL_URLS_JSON=""
             FIRST_URL=1
