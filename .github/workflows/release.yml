@@ -1,7 +1,12 @@
-name: 'Migurinth App release'
+name: 'Migurinth App Release'
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy from'
+        default: 'release'
+        required: true
 
 jobs:
   check_version:
@@ -10,6 +15,8 @@ jobs:
       new_version: ${{ steps.extract_version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
 
       - name: Extract version from tauri.conf.json
         id: extract_version
@@ -38,6 +45,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
 
       - name: Rust setup (mac)
         if: startsWith(matrix.platform, 'macos')
@@ -163,6 +172,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -214,8 +225,9 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
