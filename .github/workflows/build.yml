@@ -1,8 +1,9 @@
 name: 'Migurinth App build'
+
 on:
   push:
     branches:
-      - main
+      - *
     tags:
       - 'v*'
     paths:
