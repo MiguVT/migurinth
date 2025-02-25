@@ -254,10 +254,10 @@ jobs:
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
           declare -A PLATFORMS=(
-            ["linux-x86_64"]="Modrinth.App_${VERSION}_amd64.AppImage.tar.gz;Modrinth.App_${VERSION}_amd64.deb,Modrinth.App_${VERSION}_amd64.AppImage,Modrinth.App-${VERSION}-1.x86_64.rpm"
-            ["windows-x86_64"]="Modrinth.App_${VERSION}_x64-setup.nsis.zip;Modrinth.App_${VERSION}_x64-setup.exe,Modrinth.App_${VERSION}_x64_en-US.msi"
-            ["darwin-x86_64"]="Modrinth.App.app.tar.gz;Modrinth.App_${VERSION}_universal.dmg"
-            ["darwin-aarch64"]="Modrinth.App.app.tar.gz;Modrinth.App_${VERSION}_universal.dmg"
+            ["linux-x86_64"]="release/bundle/appimage/Modrinth App_${VERSION}_amd64.AppImage.tar.gz;release/bundle/deb/Modrinth App_${VERSION}_amd64.deb,release/bundle/appimage/Modrinth App_${VERSION}_amd64.AppImage,release/bundle/rpm/Modrinth App-${VERSION}-1.x86_64.rpm"
+            ["windows-x86_64"]="release/bundle/nsis/Modrinth App_${VERSION}_x64-setup.nsis.zip;release/bundle/nsis/Modrinth App_${VERSION}_x64-setup.exe"
+            ["darwin-x86_64"]="universal-apple-darwin/release/bundle/macos/Modrinth App.app.tar.gz;universal-apple-darwin/release/bundle/dmg/Modrinth App_${VERSION}_universal.dmg"
+            ["darwin-aarch64"]="universal-apple-darwin/release/bundle/macos/Modrinth App.app.tar.gz;universal-apple-darwin/release/bundle/dmg/Modrinth App_${VERSION}_universal.dmg"
           )
 
           echo '{' > $UPDATES_JSON
@@ -271,24 +271,24 @@ jobs:
             ENTRY="${PLATFORMS[$platform]}"
             COMPRESSED_FILE=$(echo "$ENTRY" | cut -d';' -f1)
             INSTALL_FILES=$(echo "$ENTRY" | cut -d';' -f2)
-            
-            COMPRESSED_URL="${BASE_URL}/${COMPRESSED_FILE}"
-            SIG_FILE="artifacts/release/bundle/${platform}/${COMPRESSED_FILE}.sig"
-            
+
+            COMPRESSED_URL="${BASE_URL}/$(basename "$COMPRESSED_FILE")"
+            SIG_FILE="artifacts/${COMPRESSED_FILE}.sig"
+
             if [ ! -f "$SIG_FILE" ]; then
               echo "⚠️ No signature found for ${COMPRESSED_FILE} ($SIG_FILE)" >&2
               echo "⚠️ Available files:" >&2
-              ls -laR artifacts/release/bundle/${platform}
+              ls -laR $(dirname "$SIG_FILE")
               continue
             fi
-            
+
             SIGNATURE=$(cat "$SIG_FILE" | tr -d '\n')
-            
+
             IFS=',' read -ra INSTALL_ARRAY <<< "$INSTALL_FILES"
             INSTALL_URLS_JSON=""
             FIRST_URL=1
             for f in "${INSTALL_ARRAY[@]}"; do
-              URL="${BASE_URL}/${f}"
+              URL="${BASE_URL}/$(basename "$f")"
               if [ $FIRST_URL -eq 1 ]; then
                 INSTALL_URLS_JSON="\"${URL}\""
                 FIRST_URL=0
@@ -296,13 +296,13 @@ jobs:
                 INSTALL_URLS_JSON="${INSTALL_URLS_JSON}, \"${URL}\""
               fi
             done
-            
+
             if [ $FIRST -eq 1 ]; then
               FIRST=0
             else
               echo "    ," >> $UPDATES_JSON
             fi
-            
+
             echo "    \"${platform}\": {" >> $UPDATES_JSON
             echo "      \"url\": \"${COMPRESSED_URL}\"," >> $UPDATES_JSON
             echo "      \"signature\": \"${SIGNATURE}\"," >> $UPDATES_JSON
