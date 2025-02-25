@@ -11,7 +11,7 @@
 
 ## 🚀 **Why Choose Migurinth?**
 
-### ✨ **Features**
+### ✨ **Features**:
 
 - **No Telemetry**: Enjoy your privacy—no data tracking or analytics.
 - **Ad-Free Experience**: No intrusive ads for a clean and distraction-free experience.
