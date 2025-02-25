@@ -252,15 +252,15 @@ jobs:
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
           declare -A PLATFORMS=(
-            ["linux-x86_64"]="release/bundle/appimage/Modrinth App_${VERSION}_amd64.AppImage.tar.gz;release/bundle/deb/Modrinth App_${VERSION}_amd64.deb,release/bundle/appimage/Modrinth App_${VERSION}_amd64.AppImage,release/bundle/rpm/Modrinth App-${VERSION}-1.x86_64.rpm"
-            ["windows-x86_64"]="release/bundle/nsis/Modrinth App_${VERSION}_x64-setup.nsis.zip;release/bundle/nsis/Modrinth App_${VERSION}_x64-setup.exe"
-            ["darwin-x86_64"]="universal-apple-darwin/release/bundle/macos/Modrinth App.app.tar.gz;universal-apple-darwin/release/bundle/dmg/Modrinth App_${VERSION}_universal.dmg"
-            ["darwin-aarch64"]="universal-apple-darwin/release/bundle/macos/Modrinth App.app.tar.gz;universal-apple-darwin/release/bundle/dmg/Modrinth App_${VERSION}_universal.dmg"
+            ["linux-x86_64"]="release/bundle/appimage/Migurinth_${VERSION}_amd64.AppImage.tar.gz;release/bundle/deb/Migurinth_${VERSION}_amd64.deb,release/bundle/appimage/Migurinth_${VERSION}_amd64.AppImage,release/bundle/rpm/Migurinth-${VERSION}-1.x86_64.rpm"
+            ["windows-x86_64"]="release/bundle/nsis/Migurinth_${VERSION}_x64-setup.nsis.zip;release/bundle/nsis/Migurinth_${VERSION}_x64-setup.exe"
+            ["darwin-x86_64"]="universal-apple-darwin/release/bundle/macos/Migurinth.app.tar.gz;universal-apple-darwin/release/bundle/dmg/Migurinth_${VERSION}_universal.dmg"
+            ["darwin-aarch64"]="universal-apple-darwin/release/bundle/macos/Migurinth.app.tar.gz;universal-apple-darwin/release/bundle/dmg/Migurinth_${VERSION}_universal.dmg"
           )
 
           echo '{' > $UPDATES_JSON
           echo '  "version": "'${VERSION}'",' >> $UPDATES_JSON
-          echo '  "notes": "A new version of the Modrinth App has been released!",' >> $UPDATES_JSON
+          echo '  "notes": "A new version of the Migurinth has been released!",' >> $UPDATES_JSON
           echo '  "pub_date": "'$PUB_DATE'",' >> $UPDATES_JSON
           echo '  "platforms": {' >> $UPDATES_JSON
 
