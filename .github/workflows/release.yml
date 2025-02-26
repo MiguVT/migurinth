@@ -127,7 +127,7 @@ jobs:
       # Clean all the previous build files
       - name: Clean build files
         if: startsWith(matrix.platform, 'windows')
-        run: rmdir /s /q target
+        run: Remove-Item -Recurse -Force target
 
       - name: Clean build files
         if: startsWith(matrix.platform, 'macos')
