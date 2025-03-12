@@ -17,7 +17,6 @@ use crate::routes::ApiError;
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
 use ariadne::ids::base62_impl::{parse_base62, to_base62};
 use chrono::Utc;
-use log::{info, warn};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use serde::Serialize;
@@ -34,6 +33,7 @@ use stripe::{
     PaymentIntentSetupFutureUsage, PaymentMethodId, SetupIntent,
     UpdateCustomer, Webhook,
 };
+use tracing::{info, warn};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -1749,7 +1749,8 @@ pub async fn stripe_webhook(
                                 {
                                     client
                                         .post(format!(
-                                            "https://archon.pyro.host/modrinth/v0/servers/{}/unsuspend",
+                                            "{}/modrinth/v0/servers/{}/unsuspend",
+                                            dotenvy::var("ARCHON_URL")?,
                                             id
                                         ))
                                         .header("X-Master-Key", dotenvy::var("PYRO_API_KEY")?)
@@ -1757,20 +1758,25 @@ pub async fn stripe_webhook(
                                         .await?
                                         .error_for_status()?;
 
-                                    client.post(format!(
-                                        "https://archon.pyro.host/modrinth/v0/servers/{}/reallocate",
+                                    client
+                                        .post(format!(
+                                        "{}/modrinth/v0/servers/{}/reallocate",
+                                        dotenvy::var("ARCHON_URL")?,
                                         id
                                     ))
-                                    .header("X-Master-Key", dotenvy::var("PYRO_API_KEY")?)
-                                    .json(&serde_json::json!({
-                                        "memory_mb": ram,
-                                        "cpu": cpu,
-                                        "swap_mb": swap,
-                                        "storage_mb": storage,
-                                    }))
-                                    .send()
-                                    .await?
-                                    .error_for_status()?;
+                                        .header(
+                                            "X-Master-Key",
+                                            dotenvy::var("PYRO_API_KEY")?,
+                                        )
+                                        .json(&serde_json::json!({
+                                            "memory_mb": ram,
+                                            "cpu": cpu,
+                                            "swap_mb": swap,
+                                            "storage_mb": storage,
+                                        }))
+                                        .send()
+                                        .await?
+                                        .error_for_status()?;
                                 } else {
                                     let (server_name, source) = if let Some(
                                         PaymentRequestMetadata::Pyro {
@@ -1814,7 +1820,10 @@ pub async fn stripe_webhook(
                                     }
 
                                     let res = client
-                                        .post("https://archon.pyro.host/modrinth/v0/servers/create")
+                                        .post(format!(
+                                            "{}/modrinth/v0/servers/create",
+                                            dotenvy::var("ARCHON_URL")?,
+                                        ))
                                         .header("X-Master-Key", dotenvy::var("PYRO_API_KEY")?)
                                         .json(&serde_json::json!({
                                             "user_id": to_base62(metadata.user_item.id.0 as u64),
@@ -2201,7 +2210,8 @@ pub async fn subscription_task(pool: PgPool, redis: RedisPool) {
                         {
                             let res = reqwest::Client::new()
                                 .post(format!(
-                                    "https://archon.pyro.host/modrinth/v0/servers/{}/suspend",
+                                    "{}/modrinth/v0/servers/{}/suspend",
+                                    dotenvy::var("ARCHON_URL")?,
                                     id
                                 ))
                                 .header("X-Master-Key", dotenvy::var("PYRO_API_KEY")?)
