@@ -124,19 +124,6 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
-      # Clean all the previous build files
-      - name: Clean build files
-        if: startsWith(matrix.platform, 'windows')
-        run: Remove-Item -Recurse -Force target
-
-      - name: Clean build files
-        if: startsWith(matrix.platform, 'macos')
-        run: rm -rf target
-
-      - name: Clean build files
-        if: startsWith(matrix.platform, 'ubuntu')
-        run: rm -rf target
-
       - name: build app (macos)
         run: pnpm --filter=@modrinth/app run tauri build --target universal-apple-darwin --config "tauri-release.conf.json"
         if: startsWith(matrix.platform, 'macos')
