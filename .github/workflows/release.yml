@@ -191,7 +191,7 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: release-artifacts
+          path: artifacts
           merge-multiple: true
 
       - name: Extract version
@@ -219,20 +219,20 @@ jobs:
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
-            release-artifacts/**/*.dmg
-            release-artifacts/**/*.app.tar.gz
-            release-artifacts/**/*.app.tar.gz.sig
-            release-artifacts/**/*.AppImage
-            release-artifacts/**/*.AppImage.tar.gz
-            release-artifacts/**/*.AppImage.tar.gz.sig
-            release-artifacts/**/*.deb
-            release-artifacts/**/*.rpm
-            release-artifacts/**/*.msi
-            release-artifacts/**/*.msi.zip
-            release-artifacts/**/*.msi.zip.sig
-            release-artifacts/**/*.exe
-            release-artifacts/**/*.nsis.zip
-            release-artifacts/**/*.nsis.zip.sig
+            artifacts/**/*.dmg
+            artifacts/**/*.app.tar.gz
+            artifacts/**/*.app.tar.gz.sig
+            artifacts/**/*.AppImage
+            artifacts/**/*.AppImage.tar.gz
+            artifacts/**/*.AppImage.tar.gz.sig
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
+            artifacts/**/*.msi
+            artifacts/**/*.msi.zip
+            artifacts/**/*.msi.zip.sig
+            artifacts/**/*.exe
+            artifacts/**/*.nsis.zip
+            artifacts/**/*.nsis.zip.sig
 
   generate-update-file:
     needs: release
