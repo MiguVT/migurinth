@@ -86,7 +86,7 @@ jobs:
             !target/release/bundle/nsis/*.exe
             !target/release/bundle/nsis/*.nsis.zip
             !target/release/bundle/nsis/*.nsis.zip.sig
-          key: ${{ runner.os }}-rust-target-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-rust-target-${{ hashFiles('**/Cargo.lock', 'apps/app/tauri.conf.json') }}
           restore-keys: |
             ${{ runner.os }}-rust-target-
 
