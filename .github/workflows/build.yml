@@ -72,7 +72,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-rust-target-
 
-      - name: Clean old bundle artifacts
+      - name: Clean old bundle artifacts (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          if (Test-Path "target\release") {
+            Get-ChildItem -Path "target\release" -Recurse -File | Where-Object { $_.Name -notmatch '\.keep$' } | Remove-Item -Force
+          } else {
+            Write-Output "target\release does not exist, nothing to clean."
+          }
+
+      - name: Clean old bundle artifacts (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
         run: |
           if [ -d target/release ]; then
             find target/release -type f ! -name '*.keep' -delete
