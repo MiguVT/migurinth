@@ -9,7 +9,6 @@
     "active": true,
     "category": "Game",
     "copyright": "",
-    "bundled": false,
     "targets": [
       "nsis",
       "dmg",
