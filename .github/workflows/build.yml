@@ -45,10 +45,6 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Clean old bundle artifacts
-        run: |
-          find target/release -type f ! -name '*.keep' -delete
-
       - name: Setup rust cache
         uses: actions/cache@v4
         with:
@@ -75,6 +71,14 @@ jobs:
           key: ${{ runner.os }}-rust-target-${{ hashFiles('**/Cargo.lock', '!apps/app/tauri.conf.json') }}
           restore-keys: |
             ${{ runner.os }}-rust-target-
+
+      - name: Clean old bundle artifacts
+        run: |
+          if [ -d target/release ]; then
+            find target/release -type f ! -name '*.keep' -delete
+          else
+            echo "target/release does not exist, nothing to clean."
+          fi
 
       - name: Use Node.js
         uses: actions/setup-node@v4
