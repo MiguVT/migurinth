@@ -146,9 +146,6 @@ jobs:
         with:
           name: ${{ matrix.platform }}
           path: |
-            target/*/release/bundle/*/*.dmg
-            target/*/release/bundle/*/*.app.tar.gz
-            target/*/release/bundle/*/*.app.tar.gz.sig
             target/release/bundle/*/*.dmg
             target/release/bundle/*/*.app.tar.gz
             target/release/bundle/*/*.app.tar.gz.sig
