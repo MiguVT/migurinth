@@ -9,7 +9,14 @@
     "active": true,
     "category": "Game",
     "copyright": "",
-    "targets": "all",
+    "targets": [
+      "nsis",
+      "dmg",
+      "appimage",
+      "deb",
+      "app",
+      "tar.gz"
+    ],
     "externalBin": [],
     "icon": ["icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "windows": {
@@ -44,7 +51,7 @@
     ]
   },
   "productName": "Migurinth",
-  "version": "0.9.3+106",
+  "version": "0.9.3-106",
   "mainBinaryName": "Migurinth",
   "identifier": "Migurinth",
   "plugins": {
