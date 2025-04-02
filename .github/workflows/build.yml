@@ -159,3 +159,17 @@ jobs:
 
             target/release/bundle/nsis/*.exe
             target/release/bundle/nsis/*.exe.sig
+
+      - name: Debug bundle structure (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          echo "Listing target/release/bundle:"
+          ls -laR target/release/bundle
+
+      - name: Debug bundle structure (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Write-Host "Listing target\release\bundle:"
+          Get-ChildItem -Path "target\release\bundle" -Recurse
