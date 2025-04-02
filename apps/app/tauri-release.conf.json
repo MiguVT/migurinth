@@ -1,6 +1,6 @@
 {
   "bundle": {
-    "createUpdaterArtifacts": "v1Compatible"
+    "createUpdaterArtifacts": true
   },
   "build": {
     "features": ["updater"]
