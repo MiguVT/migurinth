@@ -207,25 +207,18 @@ jobs:
             - [![Windows](https://img.shields.io/badge/Install-Windows-blue?style=for-the-badge&logo=windows)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Migurinth_${{ env.version }}_x64-setup.exe)
             - [![Mac](https://img.shields.io/badge/Install-MacOS-black?style=for-the-badge&logo=apple)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Migurinth_${{ env.version }}_universal.dmg)
             - [![Ubuntu](https://img.shields.io/badge/Install-Ubuntu-orange?style=for-the-badge&logo=ubuntu)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Migurinth_${{ env.version }}_amd64.deb)
-
+          files: |
+            artifacts/target/release/bundle/appimage/*.AppImage
+            artifacts/target/release/bundle/appimage/*.AppImage.sig
+            artifacts/target/universal-apple-darwin/release/bundle/macos/*.tar.gz
+            artifacts/target/universal-apple-darwin/release/bundle/macos/*.tar.gz.sig
+            artifacts/target/release/bundle/msi/*.msi
+            artifacts/target/release/bundle/msi/*.msi.sig
+            artifacts/target/release/bundle/nsis/*.exe
+            artifacts/target/release/bundle/nsis/*.exe.sig
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
-          files: |
-            artifacts/**/*.dmg
-            artifacts/**/*.app.tar.gz
-            artifacts/**/*.app.tar.gz.sig
-            artifacts/**/*.AppImage
-            artifacts/**/*.AppImage.tar.gz
-            artifacts/**/*.AppImage.tar.gz.sig
-            artifacts/**/*.deb
-            artifacts/**/*.rpm
-            artifacts/**/*.msi
-            artifacts/**/*.msi.zip
-            artifacts/**/*.msi.zip.sig
-            artifacts/**/*.exe
-            artifacts/**/*.nsis.zip
-            artifacts/**/*.nsis.zip.sig
 
   generate-update-file:
     needs: release
@@ -320,6 +313,6 @@ jobs:
 
       - name: Upload updates.json to release
         shell: bash
-        run: gh release upload "v${{ env.version }}" updates.json --clobber
+        run: gh release upload "v${{ env.VERSION }}" updates.json --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
