@@ -194,6 +194,11 @@ jobs:
           VERSION=$(jq -r '.version' apps/app/tauri.conf.json)
           echo "version=$VERSION" >> $GITHUB_ENV
 
+      - name: debug print version and directory
+        run: |
+          echo "Version: ${{ env.version }}"
+          ls -la artifacts
+
       - name: Create GitHub Release
         id: create_release
         uses: softprops/action-gh-release@v1
