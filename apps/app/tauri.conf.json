@@ -9,13 +9,13 @@
     "active": true,
     "category": "Game",
     "copyright": "",
+    "bundled": false,
     "targets": [
       "nsis",
       "dmg",
       "appimage",
       "deb",
-      "app",
-      "tar.gz"
+      "app"
     ],
     "externalBin": [],
     "icon": ["icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
