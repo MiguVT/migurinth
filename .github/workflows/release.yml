@@ -165,8 +165,8 @@ jobs:
             target/release/bundle/appimage/*.AppImage
             target/release/bundle/appimage/*.AppImage.sig
 
-            target/release/bundle/macos/*.tar.gz
-            target/release/bundle/macos/*.tar.gz.sig
+            target/universal-apple-darwin/release/bundle/macos/*.tar.gz
+            target/universal-apple-darwin/release/bundle/macos/*.tar.gz.sig
 
             target/release/bundle/msi/*.msi
             target/release/bundle/msi/*.msi.sig
@@ -259,8 +259,8 @@ jobs:
 
           declare -A PLATFORMS=(
             ["linux-x86_64"]="bundle/appimage/Migurinth.AppImage;bundle/appimage/Migurinth.AppImage"
-            ["darwin-x86_64"]="bundle/macos/Migurinth.app.tar.gz;bundle/macos/Migurinth.app.tar.gz"
-            ["darwin-aarch64"]="bundle/macos/Migurinth.app.tar.gz;bundle/macos/Migurinth.app.tar.gz"
+            ["darwin-x86_64"]="universal-apple-darwin/release/bundle/macos/Migurinth.app.tar.gz;universal-apple-darwin/release/bundle/macos/Migurinth.app.tar.gz"
+            ["darwin-aarch64"]="universal-apple-darwin/release/bundle/macos/Migurinth.app.tar.gz;universal-apple-darwin/release/bundle/macos/Migurinth.app.tar.gz"
             ["windows-x86_64"]="bundle/nsis/Migurinth-setup.exe;bundle/nsis/Migurinth-setup.exe, bundle/msi/Migurinth.msi"
           )
 
