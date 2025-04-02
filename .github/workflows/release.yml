@@ -45,8 +45,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.branch }}
 
       - name: Rust setup (mac)
         if: startsWith(matrix.platform, 'macos')
