@@ -213,14 +213,14 @@ jobs:
             - [![Mac](https://img.shields.io/badge/Install-MacOS-black?style=for-the-badge&logo=apple)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Migurinth_${{ env.version }}_universal.dmg)
             - [![Ubuntu](https://img.shields.io/badge/Install-Ubuntu-orange?style=for-the-badge&logo=ubuntu)](https://github.com/${{ github.repository }}/releases/download/v${{ env.version }}/Migurinth_${{ env.version }}_amd64.deb)
           files: |
-            artifacts/target/release/bundle/appimage/*.AppImage
-            artifacts/target/release/bundle/appimage/*.AppImage.sig
-            artifacts/target/universal-apple-darwin/release/bundle/macos/*.tar.gz
-            artifacts/target/universal-apple-darwin/release/bundle/macos/*.tar.gz.sig
-            artifacts/target/release/bundle/msi/*.msi
-            artifacts/target/release/bundle/msi/*.msi.sig
-            artifacts/target/release/bundle/nsis/*.exe
-            artifacts/target/release/bundle/nsis/*.exe.sig
+            artifacts/release/bundle/appimage/*.AppImage
+            artifacts/release/bundle/appimage/*.AppImage.sig
+            artifacts/universal-apple-darwin/release/bundle/macos/*.tar.gz
+            artifacts/universal-apple-darwin/release/bundle/macos/*.tar.gz.sig
+            artifacts/release/bundle/msi/*.msi
+            artifacts/release/bundle/msi/*.msi.sig
+            artifacts/release/bundle/nsis/*.exe
+            artifacts/release/bundle/nsis/*.exe.sig
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -256,10 +256,10 @@ jobs:
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
           declare -A PLATFORMS=(
-            ["linux-x86_64"]="bundle/appimage/Migurinth.AppImage;bundle/appimage/Migurinth.AppImage"
+            ["linux-x86_64"]="release/bundle/appimage/Migurinth.AppImage;release/bundle/appimage/Migurinth.AppImage"
             ["darwin-x86_64"]="universal-apple-darwin/release/bundle/macos/Migurinth.app.tar.gz;universal-apple-darwin/release/bundle/macos/Migurinth.app.tar.gz"
             ["darwin-aarch64"]="universal-apple-darwin/release/bundle/macos/Migurinth.app.tar.gz;universal-apple-darwin/release/bundle/macos/Migurinth.app.tar.gz"
-            ["windows-x86_64"]="bundle/nsis/Migurinth-setup.exe;bundle/nsis/Migurinth-setup.exe, bundle/msi/Migurinth.msi"
+            ["windows-x86_64"]="release/bundle/nsis/Migurinth-setup.exe;release/bundle/nsis/Migurinth-setup.exe, release/bundle/msi/Migurinth.msi"
           )
 
           echo '{' > $UPDATES_JSON
