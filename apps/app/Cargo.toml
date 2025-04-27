@@ -1,12 +1,7 @@
 [package]
 name = "theseus_gui"
-<<<<<<< HEAD
-version = "0.9.3"
-description = "The Migurinth App is a desktop application for managing your Minecraft mods"
-=======
 version = "0.9.4"
-description = "The Modrinth App is a desktop application for managing your Minecraft mods"
->>>>>>> 362fc11c81e713109044ee893ea3d0f5d14a7cc9
+description = "The Migurinth App is a desktop application for managing your Minecraft mods"
 license = "GPL-3.0-only"
 repository = "https://github.com/modrinth/code/apps/app/"
 edition = "2021"
