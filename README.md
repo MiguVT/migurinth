@@ -8,6 +8,22 @@
 
 ---
 
+## 📚 Table of Contents
+
+- [🌱 **Migurinth**](#-migurinth)
+  - [📚 Table of Contents](#-table-of-contents)
+  - [🚀 **Why Choose Migurinth?**](#-why-choose-migurinth)
+    - [✨ **Features**](#-features)
+  - [📸 **Screenshots**](#-screenshots)
+  - [📥 **Download \& Installation**](#-download--installation)
+    - [**Installation Instructions**](#installation-instructions)
+  - [🌟 **What Makes Migurinth Different?**](#-what-makes-migurinth-different)
+  - [📄 **License**](#-license)
+  - [⚠️ **Disclaimer**](#️-disclaimer)
+  - [📧 **Contact**](#-contact)
+
+---
+
 ## 🚀 **Why Choose Migurinth?**
 
 ### ✨ **Features**
