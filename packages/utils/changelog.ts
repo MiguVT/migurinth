@@ -11,6 +11,53 @@ export type VersionEntry = {
 
 const VERSIONS: VersionEntry[] = [
   {
+    date: `2025-04-26T19:15:00-07:00`,
+    product: 'app',
+    version: `0.9.4`,
+    body: `### Added
+- Added a Worlds tab to instances that allow you to manage your worlds and servers directly from the app
+  - Server ping, play count, and descriptions will all show before having to open the game.
+  - Add, edit, and remove servers
+  - Edit and delete singleplayer worlds
+- Added 'Quick Play' functionality, allowing you to jump straight into worlds and servers from the app
+- Added new launcher-log.txt file to log stdout to a file, similar to the Minecraft Launcher which can be helpful for debugging.
+
+### Improvements
+- Overhauled the 'Jump back in' section of the Home page, showing recently played worlds instead of just instances.
+  - This supports the new 'Quick Play' functionality, allowing you to jump back into your recent worlds (on supported Minecraft versions 1.20+)
+- Improved the fatal error dialog to show debug information more prominently, and allow you to copy it to share with support.
+- Fixed the display of critical announcements that has been broken since 0.9.0.
+- Fixed content authors not displaying properly on Content page if the content was owned by an organization.
+- Fixed random errors on the Library page, causing no instances to load.
+- Fixed .mrpack file association on Linux.
+- Fixed occasional failures when moving app directory between disks.`,
+  },
+  {
+    date: `2025-04-25T19:45:00-07:00`,
+    product: 'web',
+    body: `### Improvements
+- Added feedback survey upon Modrinth Servers cancellation.
+- Added FAQ question about the currency for Modrinth Servers subscription payments.`,
+  },
+  {
+    date: `2025-04-18T22:30:00-07:00`,
+    product: 'web',
+    body: `### Improvements
+- Updated Modrinth Servers marketing page to be accurate to post-Pyro infrastructure.`,
+  },
+  {
+    date: `2025-04-17T02:25:00-07:00`,
+    product: 'servers',
+    body: `### Improvements
+- Completely overhauled the Backups interface and fixed them being non-functional.
+  - Backups will now show progress when creating and restoring.
+  - Backups now have a "Prepare download" phase, which will prepare a backup file for downloading.
+  - You can now cancel a backup in progress and retry a failed backup.
+- When a backup is in progress, you will no longer be allowed to modify the modpack or loader.
+- Removed the ability to create backups on install automatically, and replaced with a notice that you may want to create a backup before installing a new modpack or loader. This is because the previous implementation of backup on install was unreliable and buggy. We are working on a better implementation for this feature and plan for it to return in the future.
+- Temporarily disabled auto backups button, since they are currently not working.`,
+  },
+  {
     date: `2025-04-15T16:35:00-07:00`,
     product: 'servers',
     body: `### Added

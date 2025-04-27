@@ -16,6 +16,7 @@ import {
   RestoreIcon,
   RightArrowIcon,
   SettingsIcon,
+  WorldIcon,
   XIcon,
 } from '@modrinth/assets'
 import { Avatar, Button, ButtonStyled, Notifications, OverflowMenu } from '@modrinth/ui'
@@ -165,11 +166,17 @@ async function setupApp() {
     `https://api.modrinth.com/appCriticalAnnouncement.json?version=${version}`,
     'criticalAnnouncements',
     true,
-  ).then((res) => {
-    if (res && res.header && res.body) {
-      criticalErrorMessage.value = res
-    }
-  })
+  )
+    .then((res) => {
+      if (res && res.header && res.body) {
+        criticalErrorMessage.value = res
+      }
+    })
+    .catch(() => {
+      console.log(
+        `No critical announcement found at https://api.modrinth.com/appCriticalAnnouncement.json?version=${version}`,
+      )
+    })
 
   useFetch(`https://modrinth.com/blog/news.json`, 'news', true).then((res) => {
     if (res && res.articles) {
@@ -352,7 +359,7 @@ function handleAuxClick(e) {
 <template>
   <SplashScreen v-if="!stateFailed" ref="splashScreen" data-tauri-drag-region />
   <div id="teleports"></div>
-  <div v-if="stateInitialized" class="app-grid-layout relative">
+  <div v-if="stateInitialized" class="app-grid-layout experimental-styles-within relative">
     <Suspense>
       <AppSettingsModal ref="settingsModal" />
     </Suspense>
@@ -364,6 +371,9 @@ function handleAuxClick(e) {
     >
       <NavButton v-tooltip.right="'Home'" to="/">
         <HomeIcon />
+      </NavButton>
+      <NavButton v-if="themeStore.featureFlags.worlds_tab" v-tooltip.right="'Worlds'" to="/worlds">
+        <WorldIcon />
       </NavButton>
       <NavButton
         v-tooltip.right="'Discover content'"
@@ -465,7 +475,7 @@ function handleAuxClick(e) {
             <RunningAppBar />
           </Suspense>
         </div>
-        <section v-if="!nativeDecorations" class="window-controls">
+        <section v-if="!nativeDecorations" class="window-controls" data-tauri-drag-region-exclude>
           <Button class="titlebar-button" icon-only @click="() => getCurrentWindow().minimize()">
             <MinimizeIcon />
           </Button>
@@ -694,6 +704,14 @@ function handleAuxClick(e) {
 
 .app-grid-statusbar {
   grid-area: status;
+}
+
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+
+[data-tauri-drag-region-exclude] {
+  -webkit-app-region: no-drag;
 }
 
 .app-contents {

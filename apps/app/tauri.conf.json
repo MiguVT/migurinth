@@ -50,7 +50,7 @@
     ]
   },
   "productName": "Migurinth",
-  "version": "0.9.3-107",
+  "version": "0.9.4-108",
   "mainBinaryName": "Migurinth",
   "identifier": "Migurinth",
   "plugins": {
@@ -82,7 +82,7 @@
     ],
     "security": {
       "assetProtocol": {
-        "scope": ["$APPDATA/caches/icons/*", "$APPCONFIG/caches/icons/*", "$CONFIG/caches/icons/*"],
+        "scope": ["$APPDATA/caches/icons/*", "$APPCONFIG/caches/icons/*", "$CONFIG/caches/icons/*", "$APPDATA/profiles/*/saves/*/icon.png", "$APPCONFIG/profiles/*/saves/*/icon.png", "$CONFIG/profiles/*/saves/*/icon.png"],
         "enable": true
       },
       "capabilities": ["ads", "core", "plugins"],

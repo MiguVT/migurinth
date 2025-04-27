@@ -1,7 +1,12 @@
 [package]
 name = "theseus_gui"
+<<<<<<< HEAD
 version = "0.9.3"
 description = "The Migurinth App is a desktop application for managing your Minecraft mods"
+=======
+version = "0.9.4"
+description = "The Modrinth App is a desktop application for managing your Minecraft mods"
+>>>>>>> 362fc11c81e713109044ee893ea3d0f5d14a7cc9
 license = "GPL-3.0-only"
 repository = "https://github.com/modrinth/code/apps/app/"
 edition = "2021"
@@ -30,8 +35,10 @@ tokio = { version = "1", features = ["full"] }
 thiserror = "1.0"
 daedalus = { path = "../../packages/daedalus" }
 chrono = "0.4.26"
+either = "1.15"
 
 url = "2.2"
+urlencoding = "2.1"
 uuid = { version = "1.1", features = ["serde", "v4"] }
 os_info = "3.7.0"
 
