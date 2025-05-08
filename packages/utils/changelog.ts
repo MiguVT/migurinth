@@ -11,6 +11,54 @@ export type VersionEntry = {
 
 const VERSIONS: VersionEntry[] = [
   {
+    date: `2025-05-07T19:30:00-07:00`,
+    product: 'servers',
+    body: `### Added
+- Added the ability to extract .zip files in the Files page.
+- Added the ability to extract a remote .zip file from a URL, or from a CurseForge modpack version URL.
+- Dependencies will now automatically be installed when installing a mod from Modrinth.`,
+  },
+  {
+    date: `2025-05-07T19:30:00-07:00`,
+    product: 'web',
+    body: `### Improvements
+- Fixed organization URLs being case sensitive. (Contributed by [IMB11](https://github.com/modrinth/code/pull/3621))
+- Fixed notifications not loading sometimes. (Contributed by [IMB11](https://github.com/modrinth/code/pull/3624))
+- Fixed marking all notifications as read. (Contributed by [IMB11](https://github.com/modrinth/code/pull/3624))
+- Fixed relative time sometimes having poor rounding, and sometimes showing future dates unexpectedly. (Contributed by [IMB11](https://github.com/modrinth/code/pull/3612))
+- Fixed localized pricing not showing in some cases for Modrinth+. (Contributed by [IMB11](https://github.com/modrinth/code/pull/3623))
+- Fixed Modrinth changelog page link back to the full changelog not being clickable sometimes. (Contributed by [ThatGravyBoat](https://github.com/modrinth/code/pull/3593))
+- Fixed analytics 'Views' tab not having the updated display for 'Other' regions.`,
+  },
+  {
+    date: `2025-05-01T18:30:00-07:00`,
+    product: 'web',
+    body: `### Improvements
+- Added a button to switch Modrinth+ billing between monthly and yearly.
+- Updated Modrinth App marketing page screenshots.`,
+  },
+  {
+    date: `2025-05-01T18:10:00-07:00`,
+    product: 'app',
+    version: `0.9.5`,
+    body: `### Improvements
+- Fixed certain mods with a large number of versions not being able to be installed or load their versions.
+- Fixed server descriptions not being rendered with the Minecraft font.
+- When installing a modpack, the page will now change to the instance once it's created.
+- Last played time for existing servers will now be loaded from log files instead of displaying "Never played".
+- Home page's "Jump back in" section will now display in multiple columns when the screen is very large.
+- Added the ability to launch the instance from a World entry on the Home page.
+- Added the ability to hide a world from the Home page.
+- Added an appearance setting to only show instances instead of worlds on the Home page.
+- Fixed Home page rendering being blocked by server pings.
+- Fixed Home page sometimes not sending the correct protocol version when fetching server data.
+- Fixed server data not being loaded immediately after adding it.
+- Fixed Worlds tab filters showing up in the wrong situations.
+- Fixed new Singleplayer worlds not being added to the Worlds tab without a refresh.
+- Fixed an excessive number of items showing up in "Jump back in" sometimes.
+- Fixed critical error modal cutting off long single-line error messages.`,
+  },
+  {
     date: `2025-04-29T08:20:00-07:00`,
     product: 'web',
     body: `### Improvements

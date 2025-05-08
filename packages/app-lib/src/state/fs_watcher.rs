@@ -1,9 +1,13 @@
-use crate::event::emit::{emit_profile, emit_warning};
+use crate::State;
 use crate::event::ProfilePayloadType;
-use crate::state::{DirectoryInfo, ProfileInstallStage, ProjectType};
-use futures::{channel::mpsc::channel, SinkExt, StreamExt};
+use crate::event::emit::{emit_profile, emit_warning};
+use crate::state::{
+    DirectoryInfo, ProfileInstallStage, ProjectType, attached_world_data,
+};
+use crate::worlds::WorldType;
+use futures::{SinkExt, StreamExt, channel::mpsc::channel};
 use notify::{RecommendedWatcher, RecursiveMode};
-use notify_debouncer_mini::{new_debouncer, DebounceEventResult, Debouncer};
+use notify_debouncer_mini::{DebounceEventResult, Debouncer, new_debouncer};
 use std::time::Duration;
 use tokio::sync::RwLock;
 
@@ -87,16 +91,31 @@ pub async fn init_watcher() -> crate::Result<FileWatcher> {
                                         "World updated: {}",
                                         e.path.display()
                                     );
-                                    Some(ProfilePayloadType::WorldUpdated {
-                                        world: e
-                                            .path
-                                            .parent()
-                                            .unwrap()
-                                            .file_name()
-                                            .unwrap()
-                                            .to_string_lossy()
-                                            .to_string(),
-                                    })
+                                    let world = e
+                                        .path
+                                        .parent()
+                                        .unwrap()
+                                        .file_name()
+                                        .unwrap()
+                                        .to_string_lossy()
+                                        .to_string();
+                                    if !e.path.is_file() {
+                                        let profile_path_str = profile_path_str.clone();
+                                        let world = world.clone();
+                                        tokio::spawn(async move {
+                                            if let Ok(state) = State::get().await {
+                                                if let Err(e) = attached_world_data::AttachedWorldData::remove_for_world(
+                                                    &profile_path_str,
+                                                    WorldType::Singleplayer,
+                                                    &world,
+                                                    &state.pool
+                                                ).await {
+                                                    tracing::warn!("Failed to remove AttachedWorldData for '{world}': {e}")
+                                                }
+                                            }
+                                        });
+                                    }
+                                    Some(ProfilePayloadType::WorldUpdated { world })
                                 } else if first_file_name
                                     .filter(|x| *x == "saves")
                                     .is_none()
@@ -155,28 +174,47 @@ pub(crate) async fn watch_profile(
     let profile_path = dirs.profiles_dir().join(profile_path);
 
     if profile_path.exists() && profile_path.is_dir() {
-        for folder in ProjectType::iterator().map(|x| x.get_folder()).chain([
+        for sub_path in ProjectType::iterator().map(|x| x.get_folder()).chain([
             "crash-reports",
             "saves",
             "servers.dat",
         ]) {
-            let path = profile_path.join(folder);
+            let full_path = profile_path.join(sub_path);
 
-            if !path.exists() && !path.is_symlink() && !folder.contains(".") {
-                if let Err(e) = crate::util::io::create_dir_all(&path).await {
-                    tracing::error!(
-                        "Failed to create directory for watcher {path:?}: {e}"
-                    );
-                    return;
+            if !full_path.exists() && !full_path.is_symlink() {
+                if !sub_path.contains(".") {
+                    if let Err(e) =
+                        crate::util::io::create_dir_all(&full_path).await
+                    {
+                        tracing::error!(
+                            "Failed to create directory for watcher {full_path:?}: {e}"
+                        );
+                        return;
+                    }
+                } else if sub_path == "servers.dat" {
+                    const EMPTY_NBT: &[u8] = &[
+                        10, // Compound tag
+                        0, 0, // Empty name
+                        0, // End of compound tag
+                    ];
+                    if let Err(e) =
+                        crate::util::io::write(&full_path, EMPTY_NBT).await
+                    {
+                        tracing::error!(
+                            "Failed to create file for watcher {full_path:?}: {e}"
+                        );
+                        return;
+                    }
                 }
             }
 
             let mut watcher = watcher.write().await;
-            if let Err(e) =
-                watcher.watcher().watch(&path, RecursiveMode::Recursive)
+            if let Err(e) = watcher
+                .watcher()
+                .watch(&full_path, RecursiveMode::Recursive)
             {
                 tracing::error!(
-                    "Failed to watch directory for watcher {path:?}: {e}"
+                    "Failed to watch directory for watcher {full_path:?}: {e}"
                 );
                 return;
             }

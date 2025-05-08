@@ -8,7 +8,14 @@ import {
   SpinnerIcon,
   StopCircleIcon,
 } from '@modrinth/assets'
-import { Avatar, ButtonStyled, commonMessages, OverflowMenu, SmartClickable } from '@modrinth/ui'
+import {
+  Avatar,
+  ButtonStyled,
+  commonMessages,
+  OverflowMenu,
+  SmartClickable,
+  useRelativeTime,
+} from '@modrinth/ui'
 import { useVIntl } from '@vintl/vintl'
 import { computed, nextTick, ref, onMounted, onUnmounted } from 'vue'
 import { showProfileInFolder } from '@/helpers/utils'
@@ -25,6 +32,7 @@ import { handleError } from '@/store/notifications'
 import { process_listener } from '@/helpers/events'
 
 const { formatMessage } = useVIntl()
+const formatRelativeTime = useRelativeTime()
 
 const router = useRouter()
 
@@ -144,7 +152,7 @@ onUnmounted(() => {
             <template v-if="instance.last_played">
               {{
                 formatMessage(commonMessages.playedLabel, {
-                  time: dayjs(instance.last_played).fromNow(),
+                  time: formatRelativeTime(instance.last_played.toISOString()),
                 })
               }}
             </template>
@@ -153,7 +161,7 @@ onUnmounted(() => {
           •
           <span v-if="modpack" class="flex items-center gap-1 truncate text-secondary">
             <router-link
-              class="inline-flex items-center gap-1 truncate hover:underline text-secondary"
+              class="inline-flex items-center gap-1 truncate hover:underline text-secondary smart-clickable:allow-pointer-events"
               :to="`/project/${modpack.id}`"
             >
               <Avatar :src="modpack.icon_url" size="16px" class="shrink-0" />
