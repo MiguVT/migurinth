@@ -1,13 +1,10 @@
-use crate::models::ids::Base62Id;
-use crate::models::ids::UserId;
+use crate::models::ids::{
+    ChargeId, ProductId, ProductPriceId, UserSubscriptionId,
+};
+use ariadne::ids::UserId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
-#[serde(from = "Base62Id")]
-#[serde(into = "Base62Id")]
-pub struct ProductId(pub u64);
 
 #[derive(Serialize, Deserialize)]
 pub struct Product {
@@ -28,11 +25,6 @@ pub enum ProductMetadata {
         storage: u32,
     },
 }
-
-#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
-#[serde(from = "Base62Id")]
-#[serde(into = "Base62Id")]
-pub struct ProductPriceId(pub u64);
 
 #[derive(Serialize, Deserialize)]
 pub struct ProductPrice {
@@ -87,11 +79,6 @@ impl PriceDuration {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
-#[serde(from = "Base62Id")]
-#[serde(into = "Base62Id")]
-pub struct UserSubscriptionId(pub u64);
-
 #[derive(Serialize, Deserialize)]
 pub struct UserSubscription {
     pub id: UserSubscriptionId,
@@ -103,11 +90,11 @@ pub struct UserSubscription {
     pub metadata: Option<SubscriptionMetadata>,
 }
 
-impl From<crate::database::models::user_subscription_item::UserSubscriptionItem>
+impl From<crate::database::models::user_subscription_item::DBUserSubscription>
     for UserSubscription
 {
     fn from(
-        x: crate::database::models::user_subscription_item::UserSubscriptionItem,
+        x: crate::database::models::user_subscription_item::DBUserSubscription,
     ) -> Self {
         Self {
             id: x.id.into(),
@@ -150,11 +137,6 @@ impl SubscriptionStatus {
 pub enum SubscriptionMetadata {
     Pyro { id: String },
 }
-
-#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
-#[serde(from = "Base62Id")]
-#[serde(into = "Base62Id")]
-pub struct ChargeId(pub u64);
 
 #[derive(Serialize, Deserialize)]
 pub struct Charge {
