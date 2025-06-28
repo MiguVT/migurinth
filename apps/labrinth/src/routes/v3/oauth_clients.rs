@@ -1,6 +1,9 @@
 use std::{collections::HashSet, fmt::Display, sync::Arc};
 
 use super::ApiError;
+use crate::file_hosting::FileHostPublicity;
+use crate::models::ids::OAuthClientId;
+use crate::util::img::{delete_old_images, upload_image_optimized};
 use crate::{
     auth::{checks::ValidateAuthorized, get_user_from_headers},
     database::{
@@ -23,7 +26,7 @@ use crate::{
 };
 use crate::{
     file_hosting::FileHost, models::oauth_clients::DeleteOAuthClientQueryParam,
-    util::routes::read_from_payload,
+    util::routes::read_limited_from_payload,
 };
 use actix_web::{
     HttpRequest, HttpResponse, delete, get, patch, post,
@@ -37,9 +40,6 @@ use rand_chacha::ChaCha20Rng;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use validator::Validate;
-
-use crate::models::ids::OAuthClientId;
-use crate::util::img::{delete_old_images, upload_image_optimized};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -69,7 +69,7 @@ pub async fn get_user_clients(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::SESSION_ACCESS]),
+        Scopes::SESSION_ACCESS,
     )
     .await?
     .1;
@@ -167,7 +167,7 @@ pub async fn oauth_client_create(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::SESSION_ACCESS]),
+        Scopes::SESSION_ACCESS,
     )
     .await?
     .1;
@@ -228,7 +228,7 @@ pub async fn oauth_client_delete(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::SESSION_ACCESS]),
+        Scopes::SESSION_ACCESS,
     )
     .await?
     .1;
@@ -285,7 +285,7 @@ pub async fn oauth_client_edit(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::SESSION_ACCESS]),
+        Scopes::SESSION_ACCESS,
     )
     .await?
     .1;
@@ -363,7 +363,7 @@ pub async fn oauth_client_icon_edit(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::SESSION_ACCESS]),
+        Scopes::SESSION_ACCESS,
     )
     .await?
     .1;
@@ -381,11 +381,12 @@ pub async fn oauth_client_icon_edit(
     delete_old_images(
         client.icon_url.clone(),
         client.raw_icon_url.clone(),
+        FileHostPublicity::Public,
         &***file_host,
     )
     .await?;
 
-    let bytes = read_from_payload(
+    let bytes = read_limited_from_payload(
         &mut payload,
         262144,
         "Icons must be smaller than 256KiB",
@@ -393,6 +394,7 @@ pub async fn oauth_client_icon_edit(
     .await?;
     let upload_result = upload_image_optimized(
         &format!("data/{client_id}"),
+        FileHostPublicity::Public,
         bytes.freeze(),
         &ext.ext,
         Some(96),
@@ -430,7 +432,7 @@ pub async fn oauth_client_icon_delete(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::SESSION_ACCESS]),
+        Scopes::SESSION_ACCESS,
     )
     .await?
     .1;
@@ -447,6 +449,7 @@ pub async fn oauth_client_icon_delete(
     delete_old_images(
         client.icon_url.clone(),
         client.raw_icon_url.clone(),
+        FileHostPublicity::Public,
         &***file_host,
     )
     .await?;
@@ -477,7 +480,7 @@ pub async fn get_user_oauth_authorizations(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::SESSION_ACCESS]),
+        Scopes::SESSION_ACCESS,
     )
     .await?
     .1;
@@ -507,7 +510,7 @@ pub async fn revoke_oauth_authorization(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::SESSION_ACCESS]),
+        Scopes::SESSION_ACCESS,
     )
     .await?
     .1;

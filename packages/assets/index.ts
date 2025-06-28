@@ -32,6 +32,7 @@ import _AlignLeftIcon from './icons/align-left.svg?component'
 import _ArchiveIcon from './icons/archive.svg?component'
 import _ArrowBigUpDashIcon from './icons/arrow-big-up-dash.svg?component'
 import _AsteriskIcon from './icons/asterisk.svg?component'
+import _BadgeCheckIcon from './icons/badge-check.svg?component'
 import _BanIcon from './icons/ban.svg?component'
 import _BellIcon from './icons/bell.svg?component'
 import _BellRingIcon from './icons/bell-ring.svg?component'
@@ -65,6 +66,7 @@ import _CopyrightIcon from './icons/copyright.svg?component'
 import _CrownIcon from './icons/crown.svg?component'
 import _CurrencyIcon from './icons/currency.svg?component'
 import _DashboardIcon from './icons/dashboard.svg?component'
+import _DatabaseIcon from './icons/database.svg?component'
 import _DownloadIcon from './icons/download.svg?component'
 import _DropdownIcon from './icons/dropdown.svg?component'
 import _EditIcon from './icons/edit.svg?component'
@@ -113,6 +115,7 @@ import _LogOutIcon from './icons/log-out.svg?component'
 import _MailIcon from './icons/mail.svg?component'
 import _ManageIcon from './icons/manage.svg?component'
 import _MaximizeIcon from './icons/maximize.svg?component'
+import _MemoryStickIcon from './icons/memory-stick.svg?component'
 import _MessageIcon from './icons/message.svg?component'
 import _MicrophoneIcon from './icons/microphone.svg?component'
 import _MinimizeIcon from './icons/minimize.svg?component'
@@ -149,6 +152,7 @@ import _ScanEyeIcon from './icons/scan-eye.svg?component'
 import _SearchIcon from './icons/search.svg?component'
 import _SendIcon from './icons/send.svg?component'
 import _ServerIcon from './icons/server.svg?component'
+import _ServerPlusIcon from './icons/server-plus.svg?component'
 import _SettingsIcon from './icons/settings.svg?component'
 import _ShareIcon from './icons/share.svg?component'
 import _ShieldIcon from './icons/shield.svg?component'
@@ -193,7 +197,6 @@ import _CubeIcon from './icons/cube.svg?component'
 import _CloudIcon from './icons/cloud.svg?component'
 import _CogIcon from './icons/cog.svg?component'
 import _CPUIcon from './icons/cpu.svg?component'
-import _DBIcon from './icons/db.svg?component'
 import _LoaderIcon from './icons/loader.svg?component'
 import _ImportIcon from './icons/import.svg?component'
 import _TimerIcon from './icons/timer.svg?component'
@@ -239,6 +242,7 @@ export const AlignLeftIcon = _AlignLeftIcon
 export const ArchiveIcon = _ArchiveIcon
 export const ArrowBigUpDashIcon = _ArrowBigUpDashIcon
 export const AsteriskIcon = _AsteriskIcon
+export const BadgeCheckIcon = _BadgeCheckIcon
 export const BanIcon = _BanIcon
 export const BellIcon = _BellIcon
 export const BellRingIcon = _BellRingIcon
@@ -271,6 +275,7 @@ export const CopyrightIcon = _CopyrightIcon
 export const CrownIcon = _CrownIcon
 export const CurrencyIcon = _CurrencyIcon
 export const DashboardIcon = _DashboardIcon
+export const DatabaseIcon = _DatabaseIcon
 export const DownloadIcon = _DownloadIcon
 export const DropdownIcon = _DropdownIcon
 export const EditIcon = _EditIcon
@@ -320,6 +325,7 @@ export const LogOutIcon = _LogOutIcon
 export const MailIcon = _MailIcon
 export const ManageIcon = _ManageIcon
 export const MaximizeIcon = _MaximizeIcon
+export const MemoryStickIcon = _MemoryStickIcon
 export const MessageIcon = _MessageIcon
 export const MicrophoneIcon = _MicrophoneIcon
 export const MinimizeIcon = _MinimizeIcon
@@ -356,6 +362,7 @@ export const ScanEyeIcon = _ScanEyeIcon
 export const SearchIcon = _SearchIcon
 export const SendIcon = _SendIcon
 export const ServerIcon = _ServerIcon
+export const ServerPlusIcon = _ServerPlusIcon
 export const SettingsIcon = _SettingsIcon
 export const ShareIcon = _ShareIcon
 export const ShieldIcon = _ShieldIcon
@@ -410,7 +417,6 @@ export const CubeIcon = _CubeIcon
 export const CloudIcon = _CloudIcon
 export const CogIcon = _CogIcon
 export const CPUIcon = _CPUIcon
-export const DBIcon = _DBIcon
 export const LoaderIcon = _LoaderIcon
 export const ImportIcon = _ImportIcon
 export const CardIcon = _CardIcon

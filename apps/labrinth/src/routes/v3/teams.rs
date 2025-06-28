@@ -57,7 +57,7 @@ pub async fn team_members_get_project(
             &**pool,
             &redis,
             &session_queue,
-            Some(&[Scopes::PROJECT_READ]),
+            Scopes::PROJECT_READ,
         )
         .await
         .map(|x| x.1)
@@ -101,13 +101,11 @@ pub async fn team_members_get_project(
             .filter(|x| {
                 logged_in
                     || x.accepted
-                    || user_id
-                        .map(|y: crate::database::models::DBUserId| {
-                            y == x.user_id
-                        })
-                        .unwrap_or(false)
+                    || user_id.is_some_and(
+                        |y: crate::database::models::DBUserId| y == x.user_id,
+                    )
             })
-            .flat_map(|data| {
+            .filter_map(|data| {
                 users.iter().find(|x| x.id == data.user_id).map(|user| {
                     crate::models::teams::TeamMember::from(
                         data,
@@ -142,7 +140,7 @@ pub async fn team_members_get_organization(
             &**pool,
             &redis,
             &session_queue,
-            Some(&[Scopes::ORGANIZATION_READ]),
+            Scopes::ORGANIZATION_READ,
         )
         .await
         .map(|x| x.1)
@@ -176,13 +174,11 @@ pub async fn team_members_get_organization(
             .filter(|x| {
                 logged_in
                     || x.accepted
-                    || user_id
-                        .map(|y: crate::database::models::DBUserId| {
-                            y == x.user_id
-                        })
-                        .unwrap_or(false)
+                    || user_id.is_some_and(
+                        |y: crate::database::models::DBUserId| y == x.user_id,
+                    )
             })
-            .flat_map(|data| {
+            .filter_map(|data| {
                 users.iter().find(|x| x.id == data.user_id).map(|user| {
                     crate::models::teams::TeamMember::from(
                         data,
@@ -222,7 +218,7 @@ pub async fn team_members_get(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::PROJECT_READ]),
+        Scopes::PROJECT_READ,
     )
     .await
     .map(|x| x.1)
@@ -242,11 +238,11 @@ pub async fn team_members_get(
         .filter(|x| {
             logged_in
                 || x.accepted
-                || user_id
-                    .map(|y: crate::database::models::DBUserId| y == x.user_id)
-                    .unwrap_or(false)
+                || user_id.is_some_and(
+                    |y: crate::database::models::DBUserId| y == x.user_id,
+                )
         })
-        .flat_map(|data| {
+        .filter_map(|data| {
             users.iter().find(|x| x.id == data.user_id).map(|user| {
                 crate::models::teams::TeamMember::from(
                     data,
@@ -294,7 +290,7 @@ pub async fn teams_get(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::PROJECT_READ]),
+        Scopes::PROJECT_READ,
     )
     .await
     .map(|x| x.1)
@@ -319,7 +315,7 @@ pub async fn teams_get(
         let team_members = members
             .into_iter()
             .filter(|x| logged_in || x.accepted)
-            .flat_map(|data| {
+            .filter_map(|data| {
                 users.iter().find(|x| x.id == data.user_id).map(|user| {
                     crate::models::teams::TeamMember::from(
                         data,
@@ -348,7 +344,7 @@ pub async fn join_team(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::PROJECT_WRITE]),
+        Scopes::PROJECT_WRITE,
     )
     .await?
     .1;
@@ -437,7 +433,7 @@ pub async fn add_team_member(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::PROJECT_WRITE]),
+        Scopes::PROJECT_WRITE,
     )
     .await?
     .1;
@@ -592,8 +588,7 @@ pub async fn add_team_member(
             };
         if new_user_organization_team_member
             .as_ref()
-            .map(|tm| tm.is_owner)
-            .unwrap_or(false)
+            .is_some_and(|tm| tm.is_owner)
             && new_member.permissions != ProjectPermissions::all()
         {
             return Err(ApiError::InvalidInput(
@@ -692,7 +687,7 @@ pub async fn edit_team_member(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::PROJECT_WRITE]),
+        Scopes::PROJECT_WRITE,
     )
     .await?
     .1;
@@ -748,12 +743,10 @@ pub async fn edit_team_member(
 
             if organization_team_member
                 .as_ref()
-                .map(|x| x.is_owner)
-                .unwrap_or(false)
+                .is_some_and(|x| x.is_owner)
                 && edit_member
                     .permissions
-                    .map(|x| x != ProjectPermissions::all())
-                    .unwrap_or(false)
+                    .is_some_and(|x| x != ProjectPermissions::all())
             {
                 return Err(ApiError::CustomAuthentication(
                     "You cannot override the project permissions of the organization owner!"
@@ -878,7 +871,7 @@ pub async fn transfer_ownership(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::PROJECT_WRITE]),
+        Scopes::PROJECT_WRITE,
     )
     .await?
     .1;
@@ -1011,7 +1004,7 @@ pub async fn transfer_ownership(
                     .collect();
 
             // If the owner of the organization is a member of the project, remove them
-            for team_id in team_ids.iter() {
+            for team_id in &team_ids {
                 DBTeamMember::delete(
                     *team_id,
                     new_owner.user_id.into(),
@@ -1050,7 +1043,7 @@ pub async fn remove_team_member(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::PROJECT_WRITE]),
+        Scopes::PROJECT_WRITE,
     )
     .await?
     .1;

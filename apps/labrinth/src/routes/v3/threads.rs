@@ -6,7 +6,7 @@ use crate::database::models::image_item;
 use crate::database::models::notification_item::NotificationBuilder;
 use crate::database::models::thread_item::ThreadMessageBuilder;
 use crate::database::redis::RedisPool;
-use crate::file_hosting::FileHost;
+use crate::file_hosting::{FileHost, FileHostPublicity};
 use crate::models::ids::{ThreadId, ThreadMessageId};
 use crate::models::images::{Image, ImageContext};
 use crate::models::notifications::NotificationBody;
@@ -119,7 +119,7 @@ pub async fn filter_authorized_threads(
         let project_thread_ids = check_threads
             .iter()
             .filter(|x| x.type_ == ThreadType::Project)
-            .flat_map(|x| x.project_id.map(|x| x.0))
+            .filter_map(|x| x.project_id.map(|x| x.0))
             .collect::<Vec<_>>();
 
         if !project_thread_ids.is_empty() {
@@ -148,13 +148,12 @@ pub async fn filter_authorized_threads(
             .await?;
         }
 
-        let org_project_thread_ids = check_threads
+        let mut org_project_thread_ids = check_threads
             .iter()
             .filter(|x| x.type_ == ThreadType::Project)
-            .flat_map(|x| x.project_id.map(|x| x.0))
-            .collect::<Vec<_>>();
+            .filter_map(|x| x.project_id.map(|x| x.0));
 
-        if !org_project_thread_ids.is_empty() {
+        if org_project_thread_ids.next().is_some() {
             sqlx::query!(
                 "
                 SELECT m.id FROM mods m
@@ -184,7 +183,7 @@ pub async fn filter_authorized_threads(
         let report_thread_ids = check_threads
             .iter()
             .filter(|x| x.type_ == ThreadType::Report)
-            .flat_map(|x| x.report_id.map(|x| x.0))
+            .filter_map(|x| x.report_id.map(|x| x.0))
             .collect::<Vec<_>>();
 
         if !report_thread_ids.is_empty() {
@@ -285,7 +284,7 @@ pub async fn thread_get(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::THREAD_READ]),
+        Scopes::THREAD_READ,
     )
     .await?
     .1;
@@ -341,7 +340,7 @@ pub async fn threads_get(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::THREAD_READ]),
+        Scopes::THREAD_READ,
     )
     .await?
     .1;
@@ -379,7 +378,7 @@ pub async fn thread_send_message(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::THREAD_WRITE]),
+        Scopes::THREAD_WRITE,
     )
     .await?
     .1;
@@ -577,7 +576,7 @@ pub async fn message_delete(
         &**pool,
         &redis,
         &session_queue,
-        Some(&[Scopes::THREAD_WRITE]),
+        Scopes::THREAD_WRITE,
     )
     .await?
     .1;
@@ -607,7 +606,12 @@ pub async fn message_delete(
         for image in images {
             let name = image.url.split(&format!("{cdn_url}/")).nth(1);
             if let Some(icon_path) = name {
-                file_host.delete_file_version("", icon_path).await?;
+                file_host
+                    .delete_file(
+                        icon_path,
+                        FileHostPublicity::Public, // FIXME: Consider using private file storage?
+                    )
+                    .await?;
             }
             database::DBImage::remove(image.id, &mut transaction, &redis)
                 .await?;

@@ -7,7 +7,7 @@ This project is part of our [monorepo](https://github.com/modrinth/code). You ca
 
 [labrinth] is the Rust-based backend serving Modrinth's API with the help of the [Actix](https://actix.rs) framework. To get started with a labrinth instance, install docker, docker-compose (which comes with Docker), and [Rust]. The initial startup can be done simply with the command `docker-compose up`, or with `docker compose up` (Compose V2 and later). That will deploy a PostgreSQL database on port 5432 and a MeiliSearch instance on port 7700. To run the API itself, you'll need to use the `cargo run` command, this will deploy the API on port 8000.
 
-To get a basic configuration, copy the `.env.example` file to `.env`. Now, you'll have to install the sqlx CLI, which can be done with cargo:
+To get a basic configuration, copy the `.env.local` file to `.env`. Now, you'll have to install the sqlx CLI, which can be done with cargo:
 
 ```bash
 cargo install --git https://github.com/launchbadge/sqlx sqlx-cli --no-default-features --features postgres,rustls
@@ -85,11 +85,10 @@ During development, you might notice that changes made directly to entities in t
 
 #### CDN options
 
-`STORAGE_BACKEND`: Controls what storage backend is used. This can be either `local`, `backblaze`, or `s3`, but defaults to `local`
+`STORAGE_BACKEND`: Controls what storage backend is used. This can be either `local` or `s3`, but defaults to `local`
 
-The Backblaze and S3 configuration options are fairly self-explanatory in name, so here's simply their names:  
-`BACKBLAZE_KEY_ID`, `BACKBLAZE_KEY`, `BACKBLAZE_BUCKET_ID`  
-`S3_ACCESS_TOKEN`, `S3_SECRET`, `S3_URL`, `S3_REGION`, `S3_BUCKET_NAME`
+The S3 configuration options are fairly self-explanatory in name, so here's simply their names:
+`S3_ACCESS_TOKEN`, `S3_SECRET`, `S3_URL`, `S3_REGION`, `S3_PUBLIC_BUCKET_NAME`, `S3_PRIVATE_BUCKET_NAME`, `S3_USES_PATH_STYLE_BUCKETS`
 
 #### Search, OAuth, and miscellaneous options
 

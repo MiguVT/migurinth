@@ -10,12 +10,46 @@ use actix_web::HttpRequest;
 use actix_web::http::header::{AUTHORIZATION, HeaderValue};
 use chrono::Utc;
 
+pub async fn get_maybe_user_from_headers<'a, E>(
+    req: &HttpRequest,
+    executor: E,
+    redis: &RedisPool,
+    session_queue: &AuthQueue,
+    required_scopes: Scopes,
+) -> Result<Option<(Scopes, User)>, AuthenticationError>
+where
+    E: sqlx::Executor<'a, Database = sqlx::Postgres> + Copy,
+{
+    if !req.headers().contains_key(AUTHORIZATION) {
+        return Ok(None);
+    }
+
+    // Fetch DB user record and minos user from headers
+    let Some((scopes, db_user)) = get_user_record_from_bearer_token(
+        req,
+        None,
+        executor,
+        redis,
+        session_queue,
+    )
+    .await?
+    else {
+        return Ok(None);
+    };
+
+    if !scopes.contains(required_scopes) {
+        return Ok(None);
+    }
+
+    Ok(Some((scopes, User::from_full(db_user))))
+}
+
 pub async fn get_user_from_headers<'a, E>(
     req: &HttpRequest,
     executor: E,
     redis: &RedisPool,
     session_queue: &AuthQueue,
-    required_scopes: Option<&[Scopes]>,
+    required_scopes: Scopes,
 ) -> Result<(Scopes, User), AuthenticationError>
 where
     E: sqlx::Executor<'a, Database = sqlx::Postgres> + Copy,
@@ -33,12 +67,8 @@ where
 
     let user = User::from_full(db_user);
 
-    if let Some(required_scopes) = required_scopes {
-        for scope in required_scopes {
-            if !scopes.contains(*scope) {
-                return Err(AuthenticationError::InvalidCredentials);
-            }
-        }
+    if !scopes.contains(required_scopes) {
+        return Err(AuthenticationError::InvalidCredentials);
     }
 
     Ok((scopes, user))
@@ -97,12 +127,11 @@ where
                     .await?;
 
             let rate_limit_ignore = dotenvy::var("RATE_LIMIT_IGNORE_KEY")?;
-            if !req
+            if req
                 .headers()
                 .get("x-ratelimit-key")
                 .and_then(|x| x.to_str().ok())
-                .map(|x| x == rate_limit_ignore)
-                .unwrap_or(false)
+                .is_none_or(|x| x != rate_limit_ignore)
             {
                 let metadata = get_session_metadata(req).await?;
                 session_queue.add_session(session.id, metadata).await;
@@ -134,7 +163,7 @@ where
 
             user.map(|u| (access_token.scopes, u))
         }
-        Some(("github", _)) | Some(("gho", _)) | Some(("ghp", _)) => {
+        Some(("github" | "gho" | "ghp", _)) => {
             let user = AuthProvider::GitHub.get_user(token).await?;
             let id =
                 AuthProvider::GitHub.get_user_id(&user.id, executor).await?;
@@ -175,7 +204,7 @@ pub async fn check_is_moderator_from_headers<'a, 'b, E>(
     executor: E,
     redis: &RedisPool,
     session_queue: &AuthQueue,
-    required_scopes: Option<&[Scopes]>,
+    required_scopes: Scopes,
 ) -> Result<User, AuthenticationError>
 where
     E: sqlx::Executor<'a, Database = sqlx::Postgres> + Copy,

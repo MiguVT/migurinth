@@ -1,4 +1,5 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+use std::mem;
 
 use crate::database::models::loader_fields::VersionField;
 use crate::database::models::project_item::{LinkUrl, ProjectQueryResult};
@@ -8,6 +9,7 @@ use crate::models::ids::{
 };
 use ariadne::ids::UserId;
 use chrono::{DateTime, Utc};
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
@@ -90,22 +92,12 @@ pub struct Project {
     /// The monetization status of this project
     pub monetization_status: MonetizationStatus,
 
+    /// The status of the manual review of the migration of side types of this project
+    pub side_types_migration_review_status: SideTypesMigrationReviewStatus,
+
     /// Aggregated loader-fields across its myriad of versions
     #[serde(flatten)]
     pub fields: HashMap<String, Vec<serde_json::Value>>,
-}
-
-fn remove_duplicates(values: Vec<serde_json::Value>) -> Vec<serde_json::Value> {
-    let mut seen = HashSet::new();
-    values
-        .into_iter()
-        .filter(|value| {
-            // Convert the JSON value to a string for comparison
-            let as_string = value.to_string();
-            // Check if the string is already in the set
-            seen.insert(as_string)
-        })
-        .collect()
 }
 
 // This is a helper function to convert a list of VersionFields into a HashMap of field name to vecs of values
@@ -132,9 +124,9 @@ pub fn from_duplicate_version_fields(
         }
     }
 
-    // Remove duplicates by converting to string and back
-    for (_, v) in fields.iter_mut() {
-        *v = remove_duplicates(v.clone());
+    // Remove duplicates
+    for v in fields.values_mut() {
+        *v = mem::take(v).into_iter().unique().collect_vec();
     }
     fields
 }
@@ -217,6 +209,8 @@ impl From<ProjectQueryResult> for Project {
             color: m.color,
             thread_id: data.thread_id.into(),
             monetization_status: m.monetization_status,
+            side_types_migration_review_status: m
+                .side_types_migration_review_status,
             fields,
         }
     }
@@ -530,6 +524,9 @@ impl ProjectStatus {
     }
 
     // Project can be displayed in search
+    // IMPORTANT: if this is changed, make sure to update the `mods_searchable_ids_gist`
+    // index in the DB to keep random project queries fast (see the
+    // `20250609134334_spatial-random-project-index.sql` migration)
     pub fn is_searchable(&self) -> bool {
         matches!(self, ProjectStatus::Approved | ProjectStatus::Archived)
     }
@@ -596,6 +593,35 @@ impl MonetizationStatus {
     }
 }
 
+/// Represents the status of the manual review of the migration of side types of this
+/// project to the new environment field.
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum SideTypesMigrationReviewStatus {
+    /// The project has been reviewed to use the new environment side types appropriately.
+    Reviewed,
+    /// The project has been automatically migrated to the new environment side types, but
+    /// the appropriateness of such migration has not been reviewed.
+    Pending,
+}
+
+impl SideTypesMigrationReviewStatus {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SideTypesMigrationReviewStatus::Reviewed => "reviewed",
+            SideTypesMigrationReviewStatus::Pending => "pending",
+        }
+    }
+
+    pub fn from_string(string: &str) -> SideTypesMigrationReviewStatus {
+        match string {
+            "reviewed" => SideTypesMigrationReviewStatus::Reviewed,
+            "pending" => SideTypesMigrationReviewStatus::Pending,
+            _ => SideTypesMigrationReviewStatus::Reviewed,
+        }
+    }
+}
+
 /// A specific version of a project
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Version {
@@ -624,7 +650,7 @@ pub struct Version {
     pub downloads: u32,
     /// The type of the release - `Alpha`, `Beta`, or `Release`.
     pub version_type: VersionType,
-    /// The status of tne version
+    /// The status of the version
     pub status: VersionStatus,
     /// The requested status of the version (used for scheduling)
     pub requested_status: Option<VersionStatus>,
@@ -854,7 +880,6 @@ impl std::fmt::Display for VersionType {
 }
 
 impl VersionType {
-    // These are constant, so this can remove unneccessary allocations (`to_string`)
     pub fn as_str(&self) -> &'static str {
         match self {
             VersionType::Release => "release",
@@ -880,7 +905,7 @@ impl std::fmt::Display for DependencyType {
 }
 
 impl DependencyType {
-    // These are constant, so this can remove unneccessary allocations (`to_string`)
+    // These are constant, so this can remove unnecessary allocations (`to_string`)
     pub fn as_str(&self) -> &'static str {
         match self {
             DependencyType::Required => "required",
