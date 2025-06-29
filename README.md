@@ -1,7 +1,8 @@
 # 🌱 **Migurinth**
 
-[![Latest Release](https://img.shields.io/github/v/release/miguvt/migurinth?color=brightgreen&label=Latest%20Release)](https://github.com/miguvt/migurinth/releases)
-[![License: AGPL v3](https://img.shields.io/github/license/miguvt/migurinth)](https://github.com/miguvt/migurinth/blob/main/LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/miguvt/migurinth?color=ea76cb&label=Latest%20Release&style=for-the-badge)](https://github.com/miguvt/migurinth/releases)
+![Commit Activity](https://img.shields.io/github/commit-activity/m/miguvt/migurinth?color=ea76cb&label=commits&style=for-the-badge)
+![Last Commit](https://img.shields.io/github/last-commit/miguvt/migurinth?color=ea76cb&label=last%20commit&style=for-the-badge)
 
 > **Migurinth** is an independent fork of the original Modrinth App, offering a **cleaner, privacy-focused experience** by removing telemetry and ads.  
 > This project is **not affiliated** with or **endorsed by Modrinth**.
