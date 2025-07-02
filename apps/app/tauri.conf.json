@@ -20,11 +20,15 @@
     "externalBin": [],
     "icon": ["icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.digicert.com",
       "nsis": {
         "installMode": "perMachine",
         "installerHooks": "./nsis/hooks.nsi"
       }
     },
+    "resources": [],
     "longDescription": "",
     "macOS": {
       "entitlements": "App.entitlements",
