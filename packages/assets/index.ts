@@ -10,6 +10,7 @@ import './omorphia.scss'
 
 // Branding
 import _FourOhFourNotFound from './branding/404.svg?component'
+import _ExcitedRinthbot from './branding/rinthbot/excited.webp'
 
 // External Icons
 import _SSODiscordIcon from './external/sso/discord.svg?component'

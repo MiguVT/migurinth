@@ -427,7 +427,7 @@ await Promise.all([loadCapes(), loadSkins(), loadCurrentUser()])
     >
       <img
         :src="ExcitedRinthbot"
-        alt="Excited Modrinth Bot"
+        alt="Excited Migurinth Bot"
         class="absolute -top-28 right-8 md:right-20 h-28 w-auto"
       />
       <div
