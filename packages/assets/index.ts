@@ -224,6 +224,7 @@ import _Heading3Icon from './icons/heading-3.svg?component'
 
 import './omorphia.scss'
 
+export const ExcitedRinthbot = _ExcitedRinthbot
 export const FourOhFourNotFound = _FourOhFourNotFound
 export const SSODiscordIcon = _SSODiscordIcon
 export const SSOGitHubIcon = _SSOGitHubIcon
