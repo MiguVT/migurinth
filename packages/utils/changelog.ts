@@ -11,6 +11,47 @@ export type VersionEntry = {
 
 const VERSIONS: VersionEntry[] = [
   {
+    date: `2025-07-05T12:00:00-07:00`,
+    product: 'app',
+    version: `0.10.1`,
+    body: `### Improvements
+- News section will now only show up to 4 articles.
+- Fixed critical issue with updating on Windows.
+- Fixed search being broken after a query that yields no results.
+- Fixed 'Jump back in' section on Home page not working.
+- Fixed too many Quick Instance items on the sidebar causing the UI to overflow.`,
+  },
+  {
+    date: `2025-07-04T12:00:00-07:00`,
+    product: 'app',
+    version: `0.10.0`,
+    body: `**Note: This update was pulled due to issues.**
+
+### Added
+- Added Skins page as a beta feature. There may be some minor bugs with it, but we'd love to get user feedback on this feature as it's been one of our most highly requested features.
+  - Save as many of your own skins as you'd like to swap between them at any moment.
+  - Pick a default cape, or override the cape on any of your saved skin profiles to tailor each look perfectly.
+  - Choose between any of the default Minecraft skins.
+
+### Improvements
+- Updated News section to pull data from our new custom news feed.
+- Fixed videos from GitHub not working in project descriptions.
+- Fixed data related to a world not being deleted from the database when the world was deleted.
+- Standardized relative date timestamps across the app.
+- Fixed 'Reset icon' button for Singleplayer worlds state not being reset when opening the Edit interface.
+- Fixed 'Repair' button showing while an instance is installing.
+- Fixed instances with non-UTF8 text files failing to launch or import.
+- Fixed launch hooks being unable to be cleared on an instance.
+- Fixed search results breaking if page number goes out of bounds.
+- Fixed servers running old Minecraft versions not showing last played time.`,
+  },
+  {
+    date: `2025-07-04T12:00:00-07:00`,
+    product: 'web',
+    body: `### Changed
+- Changed fallback ad placeholder from promoting Modrinth+ to Modrinth Servers.`,
+  },
+  {
     date: `2025-06-30T19:15:00-07:00`,
     product: 'web',
     body: `### Added
