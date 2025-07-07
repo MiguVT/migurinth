@@ -19,14 +19,21 @@ jobs:
         id: extract_version
         shell: bash
         run: |
-          # Use the same logic as theseus-build.yml
+          # Use the same logic as theseus-build.yml but improved for manual releases
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            # Running on a tag - use the tag directly
             APP_VERSION="${{ github.ref_name }}"
           else
-            # For manual releases, we need to determine the version differently
-            # Check if there's a version tag we can increment, or use a default
-            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-            APP_VERSION="${LATEST_TAG}"
+            # Running manually or on branch - get the latest tag
+            LATEST_TAG=$(git describe --tags --abbrev=0 --match="v*" 2>/dev/null || echo "")
+
+            if [[ -n "$LATEST_TAG" ]]; then
+              APP_VERSION="${LATEST_TAG}"
+              echo "Found latest tag: $LATEST_TAG"
+            else
+              echo "::error::No version tags found! Please create a tag first (e.g., git tag v1.10.3-110)"
+              exit 1
+            fi
           fi
 
           VERSION="${APP_VERSION#v}"  # Remove 'v' prefix
