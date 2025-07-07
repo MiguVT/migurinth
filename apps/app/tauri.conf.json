@@ -47,7 +47,7 @@
     ]
   },
   "productName": "Migurinth",
-  "version": "0.10.1-108",
+  "version": "../app-frontend/package.json",
   "mainBinaryName": "Migurinth",
   "identifier": "Migurinth",
   "plugins": {
