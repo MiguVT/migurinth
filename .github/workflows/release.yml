@@ -38,6 +38,7 @@ jobs:
   build:
     needs: check_version
     uses: ./.github/workflows/theseus-build.yml
+    secrets: inherit
 
   release:
     needs: [check_version, build]
