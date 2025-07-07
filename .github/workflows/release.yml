@@ -80,23 +80,13 @@ jobs:
           tag_name: ${{ env.APP_VERSION }}
           name: Release ${{ env.APP_VERSION }}
           body: |
-            A new version of **MiguRinth** has been released! 🎉
+            A new version of the **MiguRinth** has been released! 🎉
 
-            ## 🚀 Download & Install
-
-            ### Windows
-            - [Setup Installer (recommended)](https://github.com/${{ github.repository }}/releases/download/${{ env.APP_VERSION }}/Migurinth_${{ env.VERSION }}_x64-setup.exe)
-            - [MSI Package](https://github.com/${{ github.repository }}/releases/download/${{ env.APP_VERSION }}/Migurinth_${{ env.VERSION }}_x64_en-US.msi)
-
-            ### macOS
-            - [Universal DMG](https://github.com/${{ github.repository }}/releases/download/${{ env.APP_VERSION }}/Migurinth_${{ env.VERSION }}_universal.dmg)
-
-            ### Linux
-            - [AppImage](https://github.com/${{ github.repository }}/releases/download/${{ env.APP_VERSION }}/Migurinth_${{ env.VERSION }}_amd64.AppImage)
-            - [Debian Package](https://github.com/${{ github.repository }}/releases/download/${{ env.APP_VERSION }}/Migurinth_${{ env.VERSION }}_amd64.deb)
-
-            ## 📝 What's New
-            Check the commit history for detailed changes in this release.
+            🚀 **Download & Install:**
+            - [![Windows](https://img.shields.io/badge/Install-Windows-blue?style=for-the-badge&logo=windows)](https://github.com/${{ github.repository }}/releases/download/${{ env.APP_VERSION }}/Migurinth_${{ env.VERSION }}_x64-setup.exe)
+            - [![Mac](https://img.shields.io/badge/Install-MacOS-black?style=for-the-badge&logo=apple)](https://github.com/${{ github.repository }}/releases/download/${{ env.APP_VERSION }}/Migurinth_${{ env.VERSION }}_universal.dmg)
+            - [![Ubuntu](https://img.shields.io/badge/Install-Ubuntu-orange?style=for-the-badge&logo=ubuntu)](https://github.com/${{ github.repository }}/releases/download/${{ env.APP_VERSION }}/Migurinth_${{ env.VERSION }}_amd64.deb)
+            - [![Linux](https://img.shields.io/badge/Install-AppImage-green?style=for-the-badge&logo=linux)](https://github.com/${{ github.repository }}/releases/download/${{ env.APP_VERSION }}/Migurinth_${{ env.VERSION }}_amd64.AppImage)
           files: |
             artifacts/**/*.AppImage
             artifacts/**/*.AppImage.sig
