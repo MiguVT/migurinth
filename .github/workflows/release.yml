@@ -19,21 +19,15 @@ jobs:
         id: extract_version
         shell: bash
         run: |
-          # Use the same logic as theseus-build.yml but improved for manual releases
+          # This workflow must be run from a tag
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            # Running on a tag - use the tag directly
             APP_VERSION="${{ github.ref_name }}"
           else
-            # Running manually or on branch - get the latest tag
-            LATEST_TAG=$(git describe --tags --abbrev=0 --match="v*" 2>/dev/null || echo "")
-
-            if [[ -n "$LATEST_TAG" ]]; then
-              APP_VERSION="${LATEST_TAG}"
-              echo "Found latest tag: $LATEST_TAG"
-            else
-              echo "::error::No version tags found! Please create a tag first (e.g., git tag v1.10.3-110)"
-              exit 1
-            fi
+            echo "::error::This workflow must be run from a tag! Please create and push a tag first:"
+            echo "::error::  git tag v1.10.3-110"
+            echo "::error::  git push origin v1.10.3-110"
+            echo "::error::Then trigger this workflow from the tag."
+            exit 1
           fi
 
           VERSION="${APP_VERSION#v}"  # Remove 'v' prefix
@@ -43,13 +37,8 @@ jobs:
 
       - name: Check if version exists as a tag
         run: |
-          # Skip check if we're already on a tag (re-running release)
-          if [[ "${{ github.ref }}" != refs/tags/v* ]]; then
-            if git ls-remote --tags origin "${{ steps.extract_version.outputs.app_version }}" | grep -q "${{ steps.extract_version.outputs.app_version }}"; then
-              echo "::error::Version ${{ steps.extract_version.outputs.app_version }} already exists as a tag. Please increment the version number."
-              exit 1
-            fi
-          fi
+          # Skip check since we're already on the tag
+          echo "Running from tag ${{ steps.extract_version.outputs.app_version }} - skipping duplicate check"
 
   build:
     needs: check_version
