@@ -70,10 +70,18 @@ jobs:
           rename-to: ${{ startsWith(matrix.platform, 'windows') && 'dasel.exe' || 'dasel' }}
           chmod: 0755
 
+      - name: 🏷️ Get latest tag
+        id: get-latest-tag
+        shell: bash
+        run: |
+          git fetch --tags
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          echo "latest-tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
       - name: ⚙️ Set application version
         shell: bash
         env:
-          APP_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('v1.0.0-canary+{0}', github.sha) }}
+          APP_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('{0}-canary+{1}', steps.get-latest-tag.outputs.latest-tag, github.sha) }}
         run: |
           dasel put -f apps/app/Cargo.toml -t string -v "${APP_VERSION#v}" 'package.version'
           dasel put -f packages/app-lib/Cargo.toml -t string -v "${APP_VERSION#v}" 'package.version'
