@@ -35,11 +35,6 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION (full: $APP_VERSION)"
 
-      - name: Check if version exists as a tag
-        run: |
-          # Skip check since we're already on the tag
-          echo "Running from tag ${{ steps.extract_version.outputs.app_version }} - skipping duplicate check"
-
   build:
     needs: check_version
     uses: ./.github/workflows/theseus-build.yml
