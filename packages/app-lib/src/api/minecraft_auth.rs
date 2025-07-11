@@ -1,7 +1,7 @@
 //! Authentication flow interface
 
 use crate::State;
-use crate::state::{Credentials, MinecraftLoginFlow};
+use crate::state::{Credentials, MinecraftLoginFlow, MinecraftProfile};
 
 #[tracing::instrument]
 pub async fn begin_login() -> crate::Result<MinecraftLoginFlow> {
@@ -71,4 +71,30 @@ pub async fn users() -> crate::Result<Vec<Credentials>> {
     let state = State::get().await?;
     let users = Credentials::get_all(&state.pool).await?;
     Ok(users.into_iter().map(|x| x.1).collect())
+}
+
+/// Create offline credentials for a given username
+#[tracing::instrument]
+pub async fn create_offline_credentials(username: String) -> crate::Result<Credentials> {
+    let state = State::get().await?;
+    
+    // Generate a random UUID for the offline user
+    let user_id = uuid::Uuid::new_v4();
+    
+    // Create offline credentials
+    let credentials = Credentials {
+        offline_profile: MinecraftProfile {
+            id: user_id,
+            name: username,
+            ..MinecraftProfile::default()
+        },
+        access_token: format!("offline_token_{}", user_id),
+        refresh_token: format!("offline_refresh_{}", user_id),
+        expires: chrono::Utc::now() + chrono::Duration::days(365), // Long expiry for offline
+        active: true,
+    };
+    
+    credentials.upsert(&state.pool).await?;
+    
+    Ok(credentials)
 }

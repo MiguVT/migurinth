@@ -70,6 +70,13 @@
       </Button>
     </Card>
   </transition>
+
+  <!-- Login Modal -->
+  <LoginModal 
+    ref="loginModal" 
+    @login-success="handleLoginSuccess"
+    @login-cancelled="handleLoginCancelled"
+  />
 </template>
 
 <script setup>
@@ -80,15 +87,14 @@ import {
   users,
   remove_user,
   set_default_user,
-  login as login_flow,
   get_default_user,
 } from '@/helpers/auth'
 import { handleError } from '@/store/state.js'
 import { trackEvent } from '@/helpers/analytics'
 import { process_listener } from '@/helpers/events'
-import { handleSevereError } from '@/store/error.js'
 import { get_available_skins } from '@/helpers/skins'
 import { getPlayerHeadUrl } from '@/helpers/rendering/batch-skin-renderer.ts'
+import LoginModal from '@/components/ui/modal/LoginModal.vue'
 
 defineProps({
   mode: {
@@ -105,6 +111,7 @@ const loginDisabled = ref(false)
 const defaultUser = ref()
 const equippedSkin = ref(null)
 const headUrlCache = ref(new Map())
+const loginModal = ref(null)
 
 async function refreshValues() {
   defaultUser.value = await get_default_user().catch(handleError)
@@ -180,16 +187,35 @@ async function setAccount(account) {
 }
 
 async function login() {
-  loginDisabled.value = true
-  const loggedIn = await login_flow().catch(handleSevereError)
+  // Show the login modal instead of directly calling the login flow
+  loginModal.value?.show()
+}
 
-  if (loggedIn) {
-    await setAccount(loggedIn)
-    await refreshValues()
+async function handleLoginSuccess(account) {
+  try {
+    if (account.offline) {
+      // Handle offline account creation
+      // For now, we'll just simulate adding it to the accounts list
+      // In a real implementation, you'd need to add backend support for offline accounts
+      console.log('Offline account created:', account)
+      // You would call the appropriate function to add the offline account to the system
+    } else {
+      // Handle Microsoft account login
+      await setAccount(account)
+      await refreshValues()
+    }
+    
+    trackEvent('AccountLogIn', { 
+      method: account.offline ? 'offline' : 'microsoft' 
+    })
+  } catch (error) {
+    handleError(error)
   }
+}
 
-  trackEvent('AccountLogIn')
-  loginDisabled.value = false
+function handleLoginCancelled() {
+  // User cancelled the login process
+  console.log('Login cancelled by user')
 }
 
 const logout = async (id) => {
