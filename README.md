@@ -4,7 +4,7 @@
 ![Commit Activity](https://img.shields.io/github/commit-activity/m/miguvt/migurinth?color=ea76cb&label=commits&style=for-the-badge)
 ![Last Commit](https://img.shields.io/github/last-commit/miguvt/migurinth?color=ea76cb&label=last%20commit&style=for-the-badge)
 
-> **Migurinth** is an independent fork of the original Modrinth App, offering a **cleaner, privacy-focused experience** by removing telemetry and ads.  
+> **Migurinth** is an independent fork of the original Modrinth App, offering a **cleaner, privacy-focused experience** by removing telemetry and ads, while providing **full offline/cracked account support**.
 > This project is **not affiliated** with or **endorsed by Modrinth**.
 
 ---
@@ -31,18 +31,18 @@
 
 - **No Telemetry**: Enjoy your privacy—no data tracking or analytics.
 - **Ad-Free Experience**: No intrusive ads for a clean and distraction-free experience.
+- **Offline/Cracked Support**: Full support for offline/cracked Minecraft accounts.
 - **Same Build Process**: Uses the same build and update system as the original Modrinth app for full compatibility.
 
 ---
 
 ## 📸 **Screenshots**
 
-| Home | Mod Browser | Settings |
-|:----:|:-----------:|:--------:|
+|                             Home                             |                                Mod Browser                                |                               Settings                               |
+| :----------------------------------------------------------: | :-----------------------------------------------------------------------: | :------------------------------------------------------------------: |
 | ![Home Screenshot](.github/assets/MiguRinth/Readme/home.png) | ![Mod Browser Screenshot](.github/assets/MiguRinth/Readme/modbrowser.png) | ![Settings Screenshot](.github/assets/MiguRinth/Readme/settings.png) |
 
-> _*Screenshots may vary slightly depending on your operating system or app version.*_
-> _*Click on the images to view them in full resolution.*_
+> _*Screenshots may vary slightly depending on your operating system or app version. Click on the images to view them in full resolution.*_
 
 ---
 
@@ -63,6 +63,7 @@ You can download the latest version of Migurinth from the [**Releases**](https:/
    - Open the `.dmg` and drag Migurinth into the **Applications** folder.
 
 3. **Linux:**
+
    - Download the appropriate `.AppImage`, `.deb`, or `.rpm` package.
    - Follow your distribution’s standard installation procedure.
    - For AppImage, make it executable with:
@@ -80,24 +81,25 @@ You can download the latest version of Migurinth from the [**Releases**](https:/
 | ------------------ | ----------------- | ------------------------------ | ------------------- |
 | Telemetry          | Enabled           | **Disabled**                   | Sometimes enabled   |
 | Ads                | Supported         | **No Ads**                     | Often present       |
+| Offline/Cracked    | Unsupported       | **Full Support**               | Rarely supported    |
 | Build Process      | Standard          | **Same as Original**           | Often modified      |
 | User Experience    | Standard          | **Cleaner (No Ads/Telemetry)** | Sometimes intrusive |
 | Auto-Update System | Standard          | **Same as Original**           | Inconsistent        |
 
-Migurinth was created to provide a **clean, privacy-friendly experience** without sacrificing usability or performance.
+Migurinth was created to provide a **clean, privacy-friendly experience** with **full offline/cracked account support** without sacrificing usability or performance.
 
 ---
 
 ## 📄 **License**
 
-Migurinth is based on the original Modrinth App, which is licensed under the [AGPL-3.0 License](https://github.com/modrinth/code/blob/main/apps/app/LICENSE).  
+Migurinth is based on the original Modrinth App, which is licensed under the [AGPL-3.0 License](https://github.com/modrinth/code/blob/main/apps/app/LICENSE).
 This fork makes non-intrusive changes focused on removing telemetry and ads for a better user experience.
 
 ---
 
 ## ⚠️ **Disclaimer**
 
-Migurinth is an **independent fork** and is **not affiliated** with or **endorsed by Modrinth**.  
+Migurinth is an **independent fork** and is **not affiliated** with or **endorsed by Modrinth**.
 This project was created for a better experience without telemetry, ads, or intrusive features.
 
 ---
