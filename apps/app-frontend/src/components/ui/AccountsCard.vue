@@ -112,20 +112,34 @@ async function refreshValues() {
   defaultUser.value = await get_default_user().catch(handleError)
   accounts.value = await users().catch(handleError)
 
-  try {
-    const skins = await get_available_skins()
-    equippedSkin.value = skins.find((skin) => skin.is_equipped)
+  // Clear previous skin data
+  equippedSkin.value = null
+  headUrlCache.value.clear()
 
-    if (equippedSkin.value) {
-      try {
-        const headUrl = await getPlayerHeadUrl(equippedSkin.value)
-        headUrlCache.value.set(equippedSkin.value.texture_key, headUrl)
-      } catch (error) {
-        console.warn('Failed to get head render for equipped skin:', error)
+  // Check if the current account is offline
+  const currentAccount = accounts.value.find((account) => account.profile.id === defaultUser.value)
+  const isOfflineAccount =
+    currentAccount?.access_token?.startsWith('offline_token_') ||
+    currentAccount?.refresh_token?.startsWith('offline_refresh_')
+
+  // Only try to fetch skins for online accounts
+  if (!isOfflineAccount) {
+    try {
+      const skins = await get_available_skins()
+      equippedSkin.value = skins.find((skin) => skin.is_equipped)
+
+      if (equippedSkin.value) {
+        try {
+          const headUrl = await getPlayerHeadUrl(equippedSkin.value)
+          headUrlCache.value.set(equippedSkin.value.texture_key, headUrl)
+        } catch (error) {
+          console.warn('Failed to get head render for equipped skin:', error)
+        }
       }
+    } catch (error) {
+      console.warn('Failed to get available skins:', error)
+      equippedSkin.value = null
     }
-  } catch {
-    equippedSkin.value = null
   }
 }
 
@@ -145,6 +159,16 @@ const displayAccounts = computed(() =>
 )
 
 const avatarUrl = computed(() => {
+  // Check if the selected account is offline
+  const isOfflineAccount =
+    selectedAccount.value?.access_token?.startsWith('offline_token_') ||
+    selectedAccount.value?.refresh_token?.startsWith('offline_refresh_')
+
+  if (isOfflineAccount) {
+    // For offline accounts, always use Steve avatar
+    return 'https://launcher-files.modrinth.com/assets/steve_head.png'
+  }
+
   if (equippedSkin.value?.texture_key) {
     const cachedUrl = headUrlCache.value.get(equippedSkin.value.texture_key)
     if (cachedUrl) {
@@ -159,6 +183,16 @@ const avatarUrl = computed(() => {
 })
 
 function getAccountAvatarUrl(account) {
+  // Check if this account is offline
+  const isOfflineAccount =
+    account.access_token?.startsWith('offline_token_') ||
+    account.refresh_token?.startsWith('offline_refresh_')
+
+  if (isOfflineAccount) {
+    // For offline accounts, always use Steve avatar
+    return 'https://launcher-files.modrinth.com/assets/steve_head.png'
+  }
+
   if (
     account.profile.id === selectedAccount.value?.profile?.id &&
     equippedSkin.value?.texture_key
@@ -178,6 +212,7 @@ const selectedAccount = computed(() =>
 async function setAccount(account) {
   defaultUser.value = account.profile.id
   await set_default_user(account.profile.id).catch(handleError)
+  await refreshValues() // Refresh to update skin data for the new account
   emit('change')
 }
 

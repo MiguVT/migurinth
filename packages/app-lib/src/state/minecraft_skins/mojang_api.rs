@@ -22,6 +22,10 @@ impl MinecraftCapeOperation {
         credentials: &Credentials,
         cape_id: Uuid,
     ) -> crate::Result<()> {
+        // Skip API call for offline users
+        if credentials.is_offline() {
+            return Ok(());
+        }
         update_profile_cache_from_response(
             REQWEST_CLIENT
                 .put("https://api.minecraftservices.com/minecraft/profile/capes/active")
@@ -41,6 +45,11 @@ impl MinecraftCapeOperation {
     }
 
     pub async fn unequip_any(credentials: &Credentials) -> crate::Result<()> {
+        // Skip API call for offline users
+        if credentials.is_offline() {
+            return Ok(());
+        }
+
         update_profile_cache_from_response(
             REQWEST_CLIENT
                 .delete("https://api.minecraftservices.com/minecraft/profile/capes/active")
@@ -70,6 +79,11 @@ impl MinecraftSkinOperation {
         TextureStream::Error: Into<Box<dyn Error + Send + Sync>>,
         Bytes: From<TextureStream::Ok>,
     {
+        // Skip API call for offline users
+        if credentials.is_offline() {
+            return Ok(());
+        }
+
         let form = reqwest::multipart::Form::new()
             .text(
                 "variant",
@@ -109,6 +123,11 @@ impl MinecraftSkinOperation {
     }
 
     pub async fn unequip_any(credentials: &Credentials) -> crate::Result<()> {
+        // Skip API call for offline users
+        if credentials.is_offline() {
+            return Ok(());
+        }
+
         update_profile_cache_from_response(
             REQWEST_CLIENT
                 .delete("https://api.minecraftservices.com/minecraft/profile/skins/active")
