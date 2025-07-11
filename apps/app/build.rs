@@ -13,6 +13,7 @@ fn main() {
                 InlinedPlugin::new()
                     .commands(&[
                         "login",
+                        "login_offline",
                         "remove_user",
                         "get_default_user",
                         "set_default_user",
