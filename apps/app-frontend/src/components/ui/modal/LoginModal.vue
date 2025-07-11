@@ -13,9 +13,9 @@
           </div>
           <div class="option-content">
             <h3>Microsoft Account</h3>
-            <p>Sign in with your Microsoft account to access online features</p>
+            <p>Sign in with your Microsoft account to access premium features</p>
             <ul class="features-list">
-              <li>✓ Access to online servers</li>
+              <li>✓ Premium servers (official authentication)</li>
               <li>✓ Minecraft Realms</li>
               <li>✓ Official skins and capes</li>
               <li>✓ Cross-platform play</li>
@@ -33,12 +33,13 @@
           </div>
           <div class="option-content">
             <h3>Offline Mode</h3>
-            <p>Play without an internet connection or Microsoft account</p>
+            <p>Play without a Microsoft account using offline authentication</p>
             <ul class="features-list">
               <li>✓ Single-player worlds</li>
               <li>✓ LAN multiplayer</li>
+              <li>✓ Offline/cracked servers</li>
               <li>✓ Mod support</li>
-              <li data-warning="true">⚠ Limited to offline play only</li>
+              <li data-warning="true">⚠ Cannot access premium servers</li>
             </ul>
           </div>
         </div>
@@ -123,6 +124,9 @@ function hide() {
 
 async function loginMicrosoft() {
   try {
+    // Close offline form if it's open
+    showOfflineForm.value = false
+
     isLoading.value = true
     loadingMessage.value = 'Opening Microsoft login...'
 
