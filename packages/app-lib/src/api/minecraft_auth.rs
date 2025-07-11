@@ -90,7 +90,7 @@ pub async fn create_offline_credentials(username: String) -> crate::Result<Crede
         },
         access_token: format!("offline_token_{}", user_id),
         refresh_token: format!("offline_refresh_{}", user_id),
-        expires: chrono::Utc::now() + chrono::Duration::days(365), // Long expiry for offline
+        expires: chrono::Utc::now() + chrono::Duration::days(36500), // Never expires for offline accounts (100 years)
         active: true,
     };
 
