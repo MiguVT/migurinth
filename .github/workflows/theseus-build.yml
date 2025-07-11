@@ -45,6 +45,7 @@ jobs:
         with:
           rustflags: ''
           target: ${{ startsWith(matrix.platform, 'macos') && 'x86_64-apple-darwin' || '' }}
+          cache-key: ${{ matrix.platform }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: 🧰 Install pnpm
         uses: pnpm/action-setup@v4
