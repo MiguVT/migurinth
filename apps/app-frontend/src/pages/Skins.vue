@@ -43,6 +43,7 @@ import { handleSevereError } from '@/store/error'
 import { trackEvent } from '@/helpers/analytics'
 import type AccountsCard from '@/components/ui/AccountsCard.vue'
 import { arrayBufferToBase64 } from '@modrinth/utils'
+
 const editSkinModal = useTemplateRef('editSkinModal')
 const selectCapeModal = useTemplateRef('selectCapeModal')
 const uploadSkinModal = useTemplateRef('uploadSkinModal')
@@ -54,7 +55,7 @@ const skins = ref<Skin[]>([])
 const capes = ref<Cape[]>([])
 
 const accountsCard = inject('accountsCard') as Ref<typeof AccountsCard>
-const currentUser = ref(undefined)
+const currentUser = ref<any>(undefined)
 const currentUserId = ref<string | undefined>(undefined)
 
 const username = computed(() => currentUser.value?.profile?.name ?? undefined)
@@ -90,6 +91,17 @@ const skinNametag = computed(() =>
   settings.value.hide_nametag_skins_page ? undefined : username.value,
 )
 
+const isOnlineUser = computed(() => {
+  if (!currentUser.value) return false
+
+  // Check if user has offline tokens
+  const hasOfflineToken =
+    (currentUser.value.access_token && currentUser.value.access_token.startsWith('offline')) ||
+    (currentUser.value.refresh_token && currentUser.value.refresh_token.startsWith('offline'))
+
+  return !hasOfflineToken
+})
+
 let userCheckInterval: number | null = null
 
 const deleteSkinModal = ref()
@@ -109,6 +121,14 @@ async function deleteSkin() {
 
 async function loadCapes() {
   try {
+    // Don't load capes for offline users
+    if (!isOnlineUser.value) {
+      capes.value = []
+      defaultCape.value = undefined
+      originalDefaultCape.value = undefined
+      return
+    }
+
     capes.value = (await get_available_capes()) ?? []
     defaultCape.value = capes.value.find((c) => c.is_equipped)
     originalDefaultCape.value = defaultCape.value
@@ -121,6 +141,14 @@ async function loadCapes() {
 
 async function loadSkins() {
   try {
+    // Don't load skins for offline users
+    if (!isOnlineUser.value) {
+      skins.value = []
+      selectedSkin.value = null
+      originalSelectedSkin.value = null
+      return
+    }
+
     skins.value = (await get_available_skins()) ?? []
     generateSkinPreviews(skins.value, capes.value)
     selectedSkin.value = skins.value.find((s) => s.is_equipped) ?? null
@@ -205,7 +233,7 @@ async function loadCurrentUser() {
     currentUserId.value = defaultId
 
     const allAccounts = await users()
-    currentUser.value = allAccounts.find((acc) => acc.profile.id === defaultId)
+    currentUser.value = allAccounts.find((acc: any) => acc.profile.id === defaultId)
   } catch (e) {
     handleError(e)
     currentUser.value = undefined
@@ -272,8 +300,11 @@ async function checkUserChanges() {
     const defaultId = await get_default_user()
     if (defaultId !== currentUserId.value) {
       await loadCurrentUser()
-      await loadCapes()
-      await loadSkins()
+      // Only load capes and skins for online users
+      if (isOnlineUser.value) {
+        await loadCapes()
+        await loadSkins()
+      }
     }
   } catch (error) {
     if (currentUser.value) {
@@ -282,7 +313,11 @@ async function checkUserChanges() {
   }
 }
 
-await Promise.all([loadCapes(), loadSkins(), loadCurrentUser()])
+// Load user first, then conditionally load skins and capes
+await loadCurrentUser()
+if (isOnlineUser.value) {
+  await Promise.all([loadCapes(), loadSkins()])
+}
 </script>
 
 <template>
@@ -308,7 +343,7 @@ await Promise.all([loadCapes(), loadSkins(), loadCurrentUser()])
     @proceed="deleteSkin"
   />
 
-  <div v-if="currentUser" class="p-4 skin-layout">
+  <div v-if="currentUser && isOnlineUser" class="p-4 skin-layout">
     <div class="preview-panel">
       <h1 class="m-0 text-2xl font-bold flex items-center gap-2">
         Skins
@@ -376,7 +411,7 @@ await Promise.all([loadCapes(), loadSkins(), loadCurrentUser()])
                 color="green"
                 aria-label="Edit skin"
                 class="pointer-events-auto"
-                @click.stop="(e) => editSkinModal?.show(e, skin)"
+                @click.stop="(e: MouseEvent) => editSkinModal?.show(e, skin)"
               >
                 <EditIcon /> Edit
               </Button>
@@ -439,8 +474,8 @@ await Promise.all([loadCapes(), loadSkins(), loadCurrentUser()])
       <div class="flex flex-col gap-5">
         <h1 class="text-3xl font-extrabold m-0">Please sign-in</h1>
         <p class="text-lg m-0">
-          Please sign into your Minecraft account to use the skin management features of the
-          Modrinth app.
+          Please sign into a Microsoft account to use the skin management features of the Migurinth
+          app.
         </p>
         <ButtonStyled v-show="accountsCard" color="brand" :disabled="accountsCard.loginDisabled">
           <button :disabled="accountsCard.loginDisabled" @click="login">

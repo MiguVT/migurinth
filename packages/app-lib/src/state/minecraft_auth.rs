@@ -253,12 +253,23 @@ pub(super) static PROFILE_CACHE: Mutex<
 > = Mutex::const_new(HashMap::with_hasher(BuildHasherDefault::new()));
 
 impl Credentials {
+    /// Returns true if these credentials represent an offline user account.
+    pub fn is_offline(&self) -> bool {
+        self.access_token.starts_with("offline_token_")
+            && self.refresh_token.starts_with("offline_refresh_")
+    }
+
     /// Refreshes the authentication tokens for this user if they are expired, or
     /// very close to expiration.
     async fn refresh(
         &mut self,
         exec: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy,
     ) -> crate::Result<()> {
+        // Skip refresh for offline users as their tokens don't expire
+        if self.is_offline() {
+            return Ok(());
+        }
+
         // Use a margin of 5 minutes to give e.g. Minecraft and potentially
         // other operations that depend on a fresh token 5 minutes to complete
         // from now, and deal with some classes of clock skew
@@ -306,6 +317,11 @@ impl Credentials {
 
     #[tracing::instrument(skip(self))]
     pub async fn online_profile(&self) -> Option<Arc<MinecraftProfile>> {
+        // Skip online profile fetching for offline users
+        if self.is_offline() { // return ok
+            return None;
+        }
+
         let mut profile_cache = PROFILE_CACHE.lock().await;
 
         loop {

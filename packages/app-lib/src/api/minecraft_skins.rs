@@ -93,6 +93,8 @@ pub enum UrlOrBlob {
 
 /// Retrieves the available capes for the currently selected Minecraft profile. At most one cape
 /// can be equipped at a time. Also, at most one cape can be set as the default cape.
+///
+/// For offline mode users, this returns an empty list since capes require online authentication.
 #[tracing::instrument]
 pub async fn get_available_capes() -> crate::Result<Vec<Cape>> {
     let state = State::get().await?;
@@ -100,6 +102,11 @@ pub async fn get_available_capes() -> crate::Result<Vec<Cape>> {
     let selected_credentials = Credentials::get_default_credential(&state.pool)
         .await?
         .ok_or(ErrorKind::NoCredentialsError)?;
+
+    // If offline mode, return empty cape list since capes require online authentication
+    if selected_credentials.is_offline() {
+        return Ok(vec![]);
+    }
 
     let profile =
         selected_credentials.online_profile().await.ok_or_else(|| {
@@ -131,6 +138,8 @@ pub async fn get_available_capes() -> crate::Result<Vec<Cape>> {
 /// this includes custom skins stored in the app database, default Mojang skins, and the currently
 /// equipped skin, if different from the previous skins. Exactly one of the returned skins is
 /// marked as equipped.
+///
+/// For offline mode users, this returns an empty list since skins require online authentication.
 #[tracing::instrument]
 pub async fn get_available_skins() -> crate::Result<Vec<Skin>> {
     let state = State::get().await?;
@@ -138,6 +147,11 @@ pub async fn get_available_skins() -> crate::Result<Vec<Skin>> {
     let selected_credentials = Credentials::get_default_credential(&state.pool)
         .await?
         .ok_or(ErrorKind::NoCredentialsError)?;
+
+    // If offline mode, return an empty list since skins require online authentication
+    if selected_credentials.is_offline() {
+        return Ok(vec![]);
+    }
 
     let profile =
         selected_credentials.online_profile().await.ok_or_else(|| {

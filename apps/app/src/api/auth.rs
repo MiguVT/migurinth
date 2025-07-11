@@ -8,6 +8,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
     tauri::plugin::Builder::<R>::new("auth")
         .invoke_handler(tauri::generate_handler![
             login,
+            login_offline,
             remove_user,
             get_default_user,
             set_default_user,
@@ -77,6 +78,33 @@ pub async fn login<R: Runtime>(
     window.close()?;
     Ok(None)
 }
+
+/// Create an offline account with the given username
+#[tauri::command]
+pub async fn login_offline(username: String) -> Result<Credentials> {
+    // Validate username
+    if username.len() < 3 || username.len() > 16 {
+        return Err(theseus::ErrorKind::InputError(
+            "Username must be between 3 and 16 characters".to_string(),
+        )
+        .as_error()
+        .into());
+    }
+
+    if !username.chars().all(|c| c.is_alphanumeric() || c == '_') {
+        return Err(theseus::ErrorKind::InputError(
+            "Username can only contain letters, numbers, and underscores".to_string(),
+        )
+        .as_error()
+        .into());
+    }
+
+    // Create offline credentials
+    let credentials = minecraft_auth::create_offline_credentials(username).await?;
+
+    Ok(credentials)
+}
+
 #[tauri::command]
 pub async fn remove_user(user: uuid::Uuid) -> Result<()> {
     Ok(minecraft_auth::remove_user(user).await?)

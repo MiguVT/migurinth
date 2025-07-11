@@ -1,4 +1,4 @@
-name: Migurinth App build
+name: Migurinth_ build
 on:
   push:
     branches:
@@ -45,6 +45,7 @@ jobs:
         with:
           rustflags: ''
           target: ${{ startsWith(matrix.platform, 'macos') && 'x86_64-apple-darwin' || '' }}
+          cache-key: ${{ matrix.platform }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: 🧰 Install pnpm
         uses: pnpm/action-setup@v4
@@ -126,10 +127,10 @@ jobs:
         with:
           name: App bundle (${{ matrix.artifact-target-name }})
           path: |
-            target/release/bundle/appimage/Modrinth App_*.AppImage*
-            target/release/bundle/deb/Modrinth App_*.deb*
-            target/release/bundle/rpm/Modrinth App-*.rpm*
-            target/universal-apple-darwin/release/bundle/macos/Modrinth App.app.tar.gz*
-            target/universal-apple-darwin/release/bundle/dmg/Modrinth App_*.dmg*
-            target/release/bundle/nsis/Modrinth App_*-setup.exe*
-            target/release/bundle/nsis/Modrinth App_*-setup.nsis.zip*
+            target/release/bundle/appimage/Migurinth_*.AppImage*
+            target/release/bundle/deb/Migurinth_*.deb*
+            target/release/bundle/rpm/Migurinth_-*.rpm*
+            target/universal-apple-darwin/release/bundle/macos/Migurinth_.app.tar.gz*
+            target/universal-apple-darwin/release/bundle/dmg/Migurinth_*.dmg*
+            target/release/bundle/nsis/Migurinth_*-setup.exe*
+            target/release/bundle/nsis/Migurinth_*-setup.nsis.zip*

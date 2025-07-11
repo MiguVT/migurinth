@@ -245,7 +245,8 @@ async function copyToClipboard(text) {
             Minecraft account, you can purchase the game on the
             <a href="https://www.minecraft.net/en-us/store/minecraft-java-bedrock-edition-pc"
               >Minecraft website</a
-            >.
+            >
+            or use the Offline Mode option.
           </p>
           <div class="cta-button">
             <button class="btn btn-primary" :disabled="loadingMinecraft" @click="loginMinecraft">
