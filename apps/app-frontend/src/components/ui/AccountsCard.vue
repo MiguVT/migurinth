@@ -72,8 +72,8 @@
   </transition>
 
   <!-- Login Modal -->
-  <LoginModal 
-    ref="loginModal" 
+  <LoginModal
+    ref="loginModal"
     @login-success="handleLoginSuccess"
     @login-cancelled="handleLoginCancelled"
   />
@@ -83,12 +83,7 @@
 import { DropdownIcon, PlusIcon, TrashIcon, LogInIcon, SpinnerIcon } from '@modrinth/assets'
 import { Avatar, Button, Card } from '@modrinth/ui'
 import { ref, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue'
-import {
-  users,
-  remove_user,
-  set_default_user,
-  get_default_user,
-} from '@/helpers/auth'
+import { users, remove_user, set_default_user, get_default_user } from '@/helpers/auth'
 import { handleError } from '@/store/state.js'
 import { trackEvent } from '@/helpers/analytics'
 import { process_listener } from '@/helpers/events'
@@ -204,9 +199,9 @@ async function handleLoginSuccess(account) {
       await setAccount(account)
       await refreshValues()
     }
-    
-    trackEvent('AccountLogIn', { 
-      method: account.offline ? 'offline' : 'microsoft' 
+
+    trackEvent('AccountLogIn', {
+      method: account.offline ? 'offline' : 'microsoft',
     })
   } catch (error) {
     handleError(error)

@@ -101,7 +101,7 @@ pub async fn login_offline(username: String) -> Result<Credentials> {
 
     // Create offline credentials
     let credentials = minecraft_auth::create_offline_credentials(username).await?;
-    
+
     Ok(credentials)
 }
 

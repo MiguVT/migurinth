@@ -1,10 +1,5 @@
 <template>
-  <ModalWrapper
-    ref="loginModal"
-    header="Sign In"
-    :closable="true"
-    :show-ad-on-close="false"
-  >
+  <ModalWrapper ref="loginModal" header="Sign In" :closable="true" :show-ad-on-close="false">
     <div class="login-modal-body">
       <div class="login-header">
         <h2>Choose your login method</h2>
@@ -105,10 +100,12 @@ const isLoading = ref(false)
 const loadingMessage = ref('')
 
 const isUsernameValid = computed(() => {
-  return offlineUsername.value.length >= 3 && 
-         offlineUsername.value.length <= 16 && 
-         /^\w+$/.test(offlineUsername.value) &&
-         !usernameError.value
+  return (
+    offlineUsername.value.length >= 3 &&
+    offlineUsername.value.length <= 16 &&
+    /^\w+$/.test(offlineUsername.value) &&
+    !usernameError.value
+  )
 })
 
 function show() {
@@ -128,11 +125,11 @@ async function loginMicrosoft() {
   try {
     isLoading.value = true
     loadingMessage.value = 'Opening Microsoft login...'
-    
+
     trackEvent('LoginAttempt', { method: 'microsoft' })
-    
+
     const loggedIn = await login_flow().catch(handleSevereError)
-    
+
     if (loggedIn) {
       trackEvent('LoginSuccess', { method: 'microsoft' })
       emit('login-success', loggedIn)
@@ -154,7 +151,7 @@ function loginOffline() {
 
 function validateUsername() {
   const username = offlineUsername.value
-  
+
   if (username.length < 3) {
     usernameError.value = 'Username must be at least 3 characters long'
   } else if (username.length > 16) {
@@ -170,11 +167,11 @@ async function createOfflineAccount() {
   try {
     isLoading.value = true
     loadingMessage.value = 'Creating offline account...'
-    
+
     trackEvent('LoginAttempt', { method: 'offline' })
-    
+
     const offlineAccount = await login_offline(offlineUsername.value)
-    
+
     trackEvent('LoginSuccess', { method: 'offline' })
     emit('login-success', offlineAccount)
     hide()
@@ -188,7 +185,7 @@ async function createOfflineAccount() {
 
 defineExpose({
   show,
-  hide
+  hide,
 })
 </script>
 
@@ -203,13 +200,13 @@ defineExpose({
 
 .login-header {
   text-align: center;
-  
+
   h2 {
     margin: 0 0 0.5rem 0;
     color: var(--color-contrast);
     font-size: 1.5rem;
   }
-  
+
   p {
     margin: 0;
     color: var(--color-secondary);
@@ -231,20 +228,20 @@ defineExpose({
   cursor: pointer;
   transition: all 0.2s ease;
   background: var(--color-raised-bg);
-  
+
   &:hover {
     border-color: var(--color-brand);
     background: var(--color-brand-highlight);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
-  
+
   &.microsoft {
     &:hover {
       border-color: #0078d4;
     }
   }
-  
+
   &.offline {
     &:hover {
       border-color: var(--color-orange);
@@ -262,11 +259,11 @@ defineExpose({
   background: var(--color-brand);
   color: white;
   flex-shrink: 0;
-  
+
   .microsoft & {
     background: #0078d4;
   }
-  
+
   .offline & {
     background: var(--color-orange);
   }
@@ -274,13 +271,13 @@ defineExpose({
 
 .option-content {
   flex: 1;
-  
+
   h3 {
     margin: 0 0 0.5rem 0;
     color: var(--color-contrast);
     font-size: 1.2rem;
   }
-  
+
   p {
     margin: 0 0 0.75rem 0;
     color: var(--color-secondary);
@@ -292,14 +289,14 @@ defineExpose({
   list-style: none;
   padding: 0;
   margin: 0;
-  
+
   li {
     font-size: 0.85rem;
     color: var(--color-base);
     padding: 0.1rem 0;
   }
-  
-  li[data-warning="true"] {
+
+  li[data-warning='true'] {
     color: var(--color-orange);
   }
 }
@@ -309,7 +306,7 @@ defineExpose({
   align-items: center;
   text-align: center;
   margin: 0.5rem 0;
-  
+
   &::before,
   &::after {
     content: '';
@@ -317,7 +314,7 @@ defineExpose({
     height: 1px;
     background: var(--color-button-bg);
   }
-  
+
   span {
     padding: 0 1rem;
     color: var(--color-secondary);
@@ -331,7 +328,7 @@ defineExpose({
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   border: 1px solid var(--color-button-bg);
-  
+
   h3 {
     margin: 0 0 1rem 0;
     color: var(--color-contrast);
@@ -340,14 +337,14 @@ defineExpose({
 
 .input-group {
   margin-bottom: 1rem;
-  
+
   label {
     display: block;
     margin-bottom: 0.5rem;
     color: var(--color-contrast);
     font-weight: 500;
   }
-  
+
   input {
     width: 100%;
     padding: 0.75rem;
@@ -356,18 +353,18 @@ defineExpose({
     background: var(--color-raised-bg);
     color: var(--color-contrast);
     font-size: 1rem;
-    
+
     &:focus {
       outline: none;
       border-color: var(--color-brand);
       box-shadow: 0 0 0 2px var(--color-brand-highlight);
     }
-    
+
     &:invalid {
       border-color: var(--color-red);
     }
   }
-  
+
   .error {
     display: block;
     margin-top: 0.25rem;
@@ -389,7 +386,7 @@ defineExpose({
   gap: 1rem;
   padding: 2rem;
   text-align: center;
-  
+
   p {
     margin: 0;
     color: var(--color-secondary);

@@ -77,10 +77,10 @@ pub async fn users() -> crate::Result<Vec<Credentials>> {
 #[tracing::instrument]
 pub async fn create_offline_credentials(username: String) -> crate::Result<Credentials> {
     let state = State::get().await?;
-    
+
     // Generate a random UUID for the offline user
     let user_id = uuid::Uuid::new_v4();
-    
+
     // Create offline credentials
     let credentials = Credentials {
         offline_profile: MinecraftProfile {
@@ -93,8 +93,8 @@ pub async fn create_offline_credentials(username: String) -> crate::Result<Crede
         expires: chrono::Utc::now() + chrono::Duration::days(365), // Long expiry for offline
         active: true,
     };
-    
+
     credentials.upsert(&state.pool).await?;
-    
+
     Ok(credentials)
 }
