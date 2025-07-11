@@ -18,6 +18,7 @@ import { cancel_directory_change } from '@/helpers/settings.ts'
 import { install } from '@/helpers/profile.js'
 import { trackEvent } from '@/helpers/analytics'
 import ModalWrapper from '@/components/ui/modal/ModalWrapper.vue'
+import LoginModal from '@/components/ui/modal/LoginModal.vue'
 
 const errorModal = ref()
 const error = ref()
@@ -28,6 +29,7 @@ const title = ref('An error occurred')
 const errorType = ref('unknown')
 const supportLink = ref('https://support.modrinth.com')
 const metadata = ref({})
+const loginModal = ref(null)
 
 defineExpose({
   async show(errorVal, context, canClose = true, source = null) {
@@ -87,21 +89,8 @@ defineExpose({
 
 const loadingMinecraft = ref(false)
 async function loginMinecraft() {
-  try {
-    loadingMinecraft.value = true
-    const loggedIn = await login_flow()
-
-    if (loggedIn) {
-      await set_default_user(loggedIn.profile.id).catch(handleError)
-    }
-
-    await trackEvent('AccountLogIn', { source: 'ErrorModal' })
-    loadingMinecraft.value = false
-    errorModal.value.hide()
-  } catch (err) {
-    loadingMinecraft.value = false
-    handleSevereError(err)
-  }
+  loginModal.value?.show()
+  errorModal.value.hide()
 }
 
 async function cancelDirectoryChange() {
@@ -168,6 +157,14 @@ async function copyToClipboard(text) {
               </a>
               to troubleshoot.
             </p>
+            <p>
+              If you want to use a offline account, you can do sign in using the following button:
+            </p>
+            <div class="cta-button">
+              <button class="btn btn-primary" :disabled="loadingMinecraft" @click="loginMinecraft">
+                <LogInIcon /> Sign in to Minecraft
+              </button>
+            </div>
           </template>
           <template v-else-if="metadata.hostsFile">
             <h3>Network issues</h3>
@@ -182,6 +179,14 @@ async function copyToClipboard(text) {
               </a>
               for steps on how to fix the issue.
             </p>
+            <p>
+              If you want to use a offline account, you can do sign in using the following button:
+            </p>
+            <div class="cta-button">
+              <button class="btn btn-primary" :disabled="loadingMinecraft" @click="loginMinecraft">
+                <LogInIcon /> Sign in to Minecraft
+              </button>
+            </div>
           </template>
           <template v-else>
             <h3>Try another Microsoft account</h3>
@@ -199,6 +204,11 @@ async function copyToClipboard(text) {
               Try signing in with the
               <a href="https://www.minecraft.net/en-us/download">official Minecraft Launcher</a>
               first. Once you're done, come back here and sign in!
+            </p>
+            <p>
+              You can also try signing in with an offline account, which allows you to play
+              Minecraft but will not allow you to access premium features such as Realms, official
+              skins, and capes.
             </p>
           </template>
           <div class="cta-button">
@@ -320,6 +330,12 @@ async function copyToClipboard(text) {
       </template>
     </div>
   </ModalWrapper>
+  <!-- Login Modal -->
+  <LoginModal
+    ref="loginModal"
+    @login-success="handleLoginSuccess"
+    @login-cancelled="handleLoginCancelled"
+  />
 </template>
 
 <style>
