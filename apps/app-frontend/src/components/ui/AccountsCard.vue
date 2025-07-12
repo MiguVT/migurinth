@@ -14,7 +14,7 @@
     />
     <div class="flex flex-col w-full">
       <span>{{ selectedAccount ? selectedAccount.profile.name : 'Select account' }}</span>
-      <span class="text-secondary text-xs">Minecraft account</span>
+      <span class="text-secondary text-xs">{{ accountTypeText }}</span>
     </div>
     <DropdownIcon class="w-5 h-5 shrink-0" />
   </div>
@@ -209,6 +209,18 @@ const selectedAccount = computed(() =>
   accounts.value.find((account) => account.profile.id === defaultUser.value),
 )
 
+const accountTypeText = computed(() => {
+  if (!selectedAccount.value) {
+    return 'Not logged in'
+  }
+
+  const isOfflineAccount =
+    selectedAccount.value.access_token?.startsWith('offline_token_') ||
+    selectedAccount.value.refresh_token?.startsWith('offline_refresh_')
+
+  return isOfflineAccount ? 'Offline Mode' : 'Microsoft Account'
+})
+
 async function setAccount(account) {
   defaultUser.value = account.profile.id
   await set_default_user(account.profile.id).catch(handleError)
@@ -223,17 +235,10 @@ async function login() {
 
 async function handleLoginSuccess(account) {
   try {
-    if (account.offline) {
-      // Handle offline account creation
-      // For now, we'll just simulate adding it to the accounts list
-      // In a real implementation, you'd need to add backend support for offline accounts
-      console.log('Offline account created:', account)
-      // You would call the appropriate function to add the offline account to the system
-    } else {
-      // Handle Microsoft account login
-      await setAccount(account)
-      await refreshValues()
-    }
+    // Both offline and Microsoft accounts use the same flow
+    // The login_offline() and login() functions already handle account creation and storage
+    await setAccount(account)
+    await refreshValues()
 
     trackEvent('AccountLogIn', {
       method: account.offline ? 'offline' : 'microsoft',

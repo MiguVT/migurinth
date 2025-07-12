@@ -10,7 +10,7 @@ import {
 } from '@modrinth/assets'
 import { ChatIcon } from '@/assets/icons'
 import { ButtonStyled, Collapsible } from '@modrinth/ui'
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import { handleError } from '@/store/notifications.js'
 import { handleSevereError } from '@/store/error.js'
 import { cancel_directory_change } from '@/helpers/settings.ts'
@@ -28,6 +28,9 @@ const errorType = ref('unknown')
 const supportLink = ref('https://support.modrinth.com')
 const metadata = ref({})
 const loginModal = ref(null)
+
+// Inject AccountsCard reference to refresh it after login
+const accountsCard = inject('accountsCard', null)
 
 defineExpose({
   async show(errorVal, context, canClose = true, source = null) {
@@ -134,6 +137,25 @@ async function copyToClipboard(text) {
   setTimeout(() => {
     copied.value = false
   }, 3000)
+}
+
+async function handleLoginSuccess(account) {
+  try {
+    // Refresh the AccountsCard if available
+    if (accountsCard?.value?.refreshValues) {
+      await accountsCard.value.refreshValues()
+    }
+
+    // Close the error modal after successful login
+    errorModal.value.hide()
+  } catch (error) {
+    handleError(error)
+  }
+}
+
+function handleLoginCancelled() {
+  // User cancelled the login process
+  console.log('Login cancelled by user')
 }
 </script>
 
