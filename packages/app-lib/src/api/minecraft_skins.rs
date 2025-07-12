@@ -94,14 +94,16 @@ pub enum UrlOrBlob {
 /// Retrieves the available capes for the currently selected Minecraft profile. At most one cape
 /// can be equipped at a time. Also, at most one cape can be set as the default cape.
 ///
-/// For offline mode users, this returns an empty list since capes require online authentication.
+/// For users with no account selected or offline mode users, this returns an empty list since
+/// capes require online authentication.
 #[tracing::instrument]
 pub async fn get_available_capes() -> crate::Result<Vec<Cape>> {
     let state = State::get().await?;
 
-    let selected_credentials = Credentials::get_default_credential(&state.pool)
-        .await?
-        .ok_or(ErrorKind::NoCredentialsError)?;
+    let selected_credentials = match Credentials::get_default_credential(&state.pool).await? {
+        Some(credentials) => credentials,
+        None => return Ok(vec![]), // No account selected, return empty list
+    };
 
     // If offline mode, return empty cape list since capes require online authentication
     if selected_credentials.is_offline() {
@@ -139,14 +141,16 @@ pub async fn get_available_capes() -> crate::Result<Vec<Cape>> {
 /// equipped skin, if different from the previous skins. Exactly one of the returned skins is
 /// marked as equipped.
 ///
-/// For offline mode users, this returns an empty list since skins require online authentication.
+/// For users with no account selected or offline mode users, this returns an empty list since
+/// skins require online authentication.
 #[tracing::instrument]
 pub async fn get_available_skins() -> crate::Result<Vec<Skin>> {
     let state = State::get().await?;
 
-    let selected_credentials = Credentials::get_default_credential(&state.pool)
-        .await?
-        .ok_or(ErrorKind::NoCredentialsError)?;
+    let selected_credentials = match Credentials::get_default_credential(&state.pool).await? {
+        Some(credentials) => credentials,
+        None => return Ok(vec![]), // No account selected, return empty list
+    };
 
     // If offline mode, return an empty list since skins require online authentication
     if selected_credentials.is_offline() {
