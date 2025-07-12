@@ -271,8 +271,8 @@ function handleLoginCancelled() {
         </template>
         <div v-else-if="errorType === 'minecraft_sign_in'">
           <p>
-            To play this instance, you must sign in through Microsoft below. If you don't have a
-            Minecraft account, you can purchase the game on the
+            To play this instance, you must sign in. If you don't have a Minecraft account, you can
+            purchase the game on the
             <a href="https://www.minecraft.net/en-us/store/minecraft-java-bedrock-edition-pc"
               >Minecraft website</a
             >
