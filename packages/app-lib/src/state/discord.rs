@@ -2,7 +2,7 @@ use std::sync::{Arc, atomic::AtomicBool};
 
 use discord_rich_presence::{
     DiscordIpc, DiscordIpcClient,
-    activity::{Activity, Assets},
+    activity::{Activity, Assets, Button}, // <-- Add Button import
 };
 use tokio::sync::RwLock;
 
@@ -19,7 +19,7 @@ impl DiscordGuard {
     /// If it fails, it will still return a DiscordGuard, but the client will be unconnected
     pub fn init() -> crate::Result<DiscordGuard> {
         let dipc =
-            DiscordIpcClient::new("1123683254248148992").map_err(|e| {
+            DiscordIpcClient::new("1396916855418916945").map_err(|e| {
                 crate::ErrorKind::OtherError(format!(
                     "Could not create Discord client {e}",
                 ))
@@ -76,11 +76,14 @@ impl DiscordGuard {
             return Ok(());
         }
 
-        let activity = Activity::new().state(msg).assets(
-            Assets::new()
-                .large_image("modrinth_simple")
-                .large_text("Modrinth Logo"),
-        );
+        let activity = Activity::new()
+            .state(msg)
+            .assets(
+                Assets::new()
+                    .large_image("migurinth_simple")
+                    .large_text("Migurinth Logo"),
+            )
+            .buttons(vec![Button::new("Download", "https://migurinth.miguvt.com/")]);
 
         // Attempt to set the activity
         // If the existing connection fails, attempt to reconnect and try again
