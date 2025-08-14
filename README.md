@@ -1,6 +1,7 @@
 # 🌱 **Migurinth**
 
 [![Latest Release](https://img.shields.io/github/v/release/miguvt/migurinth?color=ea76cb&label=Latest%20Release&style=for-the-badge)](https://github.com/miguvt/migurinth/releases)
+[![Night version](https://img.shields.io/badge/Night%20Version-8A2BE2?style=for-the-badge)](https://nightly.link/MiguVT/migurinth/workflows/theseus-build/main)
 ![Commit Activity](https://img.shields.io/github/commit-activity/m/miguvt/migurinth?color=ea76cb&label=commits&style=for-the-badge)
 ![Last Commit](https://img.shields.io/github/last-commit/miguvt/migurinth?color=ea76cb&label=last%20commit&style=for-the-badge)
 
