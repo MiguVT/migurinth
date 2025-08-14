@@ -67,7 +67,8 @@
         :key="`world-${world.type}-${world.type == 'singleplayer' ? world.path : `${world.address}-${world.index}`}`"
         :world="world"
         :highlighted="highlightedWorld === getWorldIdentifier(world)"
-        :supports-quick-play="supportsQuickPlay"
+        :supports-server-quick-play="supportsServerQuickPlay"
+        :supports-world-quick-play="supportsWorldQuickPlay"
         :current-protocol="protocolVersion"
         :playing-instance="playing"
         :playing-world="worldsMatch(world, worldPlaying)"
@@ -120,53 +121,55 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import type { GameInstance } from '@/helpers/types'
-import {
-  Button,
-  ButtonStyled,
-  RadialHeader,
-  FilterBar,
-  type FilterBarOption,
-  type GameVersion,
-  GAME_MODES,
-} from '@modrinth/ui'
-import { PlusIcon, SpinnerIcon, UpdatedIcon, SearchIcon, XIcon } from '@modrinth/assets'
-import {
-  type SingleplayerWorld,
-  type World,
-  type ServerWorld,
-  type ServerData,
-  type ProfileEvent,
-  get_profile_protocol_version,
-  remove_server_from_profile,
-  delete_world,
-  start_join_server,
-  start_join_singleplayer_world,
-  getWorldIdentifier,
-  refreshServerData,
-  refreshWorld,
-  sortWorlds,
-  refreshServers,
-  hasQuickPlaySupport,
-  refreshWorlds,
-  handleDefaultProfileUpdateEvent,
-  showWorldInFolder,
-} from '@/helpers/worlds.ts'
+import type ContextMenu from '@/components/ui/ContextMenu.vue'
+import ConfirmModalWrapper from '@/components/ui/modal/ConfirmModalWrapper.vue'
 import AddServerModal from '@/components/ui/world/modal/AddServerModal.vue'
 import EditServerModal from '@/components/ui/world/modal/EditServerModal.vue'
 import EditWorldModal from '@/components/ui/world/modal/EditSingleplayerWorldModal.vue'
 import WorldItem from '@/components/ui/world/WorldItem.vue'
-
-import ConfirmModalWrapper from '@/components/ui/modal/ConfirmModalWrapper.vue'
-import { handleError } from '@/store/notifications'
-import type ContextMenu from '@/components/ui/ContextMenu.vue'
-import type { Version } from '@modrinth/utils'
 import { profile_listener } from '@/helpers/events'
 import { get_game_versions } from '@/helpers/tags'
+import type { GameInstance } from '@/helpers/types'
+import {
+  type ProfileEvent,
+  type ProtocolVersion,
+  type ServerData,
+  type ServerWorld,
+  type SingleplayerWorld,
+  type World,
+  delete_world,
+  getWorldIdentifier,
+  get_profile_protocol_version,
+  handleDefaultProfileUpdateEvent,
+  hasServerQuickPlaySupport,
+  hasWorldQuickPlaySupport,
+  refreshServerData,
+  refreshServers,
+  refreshWorld,
+  refreshWorlds,
+  remove_server_from_profile,
+  showWorldInFolder,
+  sortWorlds,
+  start_join_server,
+  start_join_singleplayer_world,
+} from '@/helpers/worlds.ts'
+import { PlusIcon, SearchIcon, SpinnerIcon, UpdatedIcon, XIcon } from '@modrinth/assets'
+import {
+  Button,
+  ButtonStyled,
+  FilterBar,
+  type FilterBarOption,
+  GAME_MODES,
+  type GameVersion,
+  RadialHeader,
+  injectNotificationManager,
+} from '@modrinth/ui'
+import type { Version } from '@modrinth/utils'
 import { defineMessages } from '@vintl/vintl'
+import { computed, onUnmounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
+const { handleError } = injectNotificationManager()
 const route = useRoute()
 
 const addServerModal = ref<InstanceType<typeof AddServerModal>>()
@@ -210,7 +213,9 @@ const worldPlaying = ref<World>()
 const worlds = ref<World[]>([])
 const serverData = ref<Record<string, ServerData>>({})
 
-const protocolVersion = ref<number | null>(await get_profile_protocol_version(instance.value.path))
+const protocolVersion = ref<ProtocolVersion | null>(
+  await get_profile_protocol_version(instance.value.path),
+)
 
 const unlistenProfile = await profile_listener(async (e: ProfileEvent) => {
   if (e.profile_path_id !== instance.value.path) return
@@ -246,7 +251,7 @@ async function refreshAllWorlds() {
   worlds.value = await refreshWorlds(instance.value.path).finally(
     () => (refreshingAll.value = false),
   )
-  await refreshServers(worlds.value, serverData.value, protocolVersion.value)
+  refreshServers(worlds.value, serverData.value, protocolVersion.value)
 
   const hasNoWorlds = worlds.value.length === 0
 
@@ -277,7 +282,7 @@ async function editServer(server: ServerWorld) {
       await refreshServer(server.address)
     }
   } else {
-    handleError(`Error refreshing server, refreshing all worlds`)
+    handleError(new Error(`Error refreshing server, refreshing all worlds`))
     await refreshAllWorlds()
   }
 }
@@ -296,7 +301,7 @@ async function editWorld(path: string, name: string, removeIcon: boolean) {
     }
     sortWorlds(worlds.value)
   } else {
-    handleError(`Error finding world in list, refreshing all worlds`)
+    handleError(new Error(`Error finding world in list, refreshing all worlds`))
     await refreshAllWorlds()
   }
 }
@@ -306,7 +311,7 @@ async function deleteWorld(world: SingleplayerWorld) {
   worlds.value = worlds.value.filter((w) => w.type !== 'singleplayer' || w.path !== world.path)
 }
 
-function handleJoinError(err: unknown) {
+function handleJoinError(err: Error) {
   handleError(err)
   startingInstance.value = false
   worldPlaying.value = undefined
@@ -352,8 +357,11 @@ function worldsMatch(world: World, other: World | undefined) {
 }
 
 const gameVersions = ref<GameVersion[]>(await get_game_versions().catch(() => []))
-const supportsQuickPlay = computed(() =>
-  hasQuickPlaySupport(gameVersions.value, instance.value.game_version),
+const supportsServerQuickPlay = computed(() =>
+  hasServerQuickPlaySupport(gameVersions.value, instance.value.game_version),
+)
+const supportsWorldQuickPlay = computed(() =>
+  hasWorldQuickPlaySupport(gameVersions.value, instance.value.game_version),
 )
 
 const filterOptions = computed(() => {
@@ -428,7 +436,7 @@ function promptToRemoveWorld(world: World): boolean {
 
 async function proceedRemoveServer() {
   if (!serverToRemove.value) {
-    handleError(`Error removing server, no server marked for removal.`)
+    handleError(new Error(`Error removing server, no server marked for removal.`))
     return
   }
   await removeServer(serverToRemove.value)
@@ -437,7 +445,7 @@ async function proceedRemoveServer() {
 
 async function proceedDeleteWorld() {
   if (!worldToDelete.value) {
-    handleError(`Error deleting world, no world marked for removal.`)
+    handleError(new Error(`Error deleting world, no world marked for removal.`))
     return
   }
   await deleteWorld(worldToDelete.value)

@@ -134,20 +134,21 @@
 
 <script setup>
 import {
-  RightArrowIcon,
-  UserIcon,
-  SSOGitHubIcon,
-  SSOMicrosoftIcon,
-  SSOGoogleIcon,
-  SSOSteamIcon,
-  SSODiscordIcon,
   KeyIcon,
   MailIcon,
+  RightArrowIcon,
+  SSODiscordIcon,
+  SSOGitHubIcon,
   SSOGitLabIcon,
+  SSOGoogleIcon,
+  SSOMicrosoftIcon,
+  SSOSteamIcon,
+  UserIcon,
 } from "@modrinth/assets";
-import { Checkbox, commonMessages } from "@modrinth/ui";
+import { Checkbox, commonMessages, injectNotificationManager } from "@modrinth/ui";
 import HCaptcha from "@/components/ui/HCaptcha.vue";
 
+const { addNotification } = injectNotificationManager();
 const { formatMessage } = useVIntl();
 
 const messages = defineMessages({
@@ -218,14 +219,13 @@ const username = ref("");
 const password = ref("");
 const confirmPassword = ref("");
 const token = ref("");
-const subscribe = ref(true);
+const subscribe = ref(false);
 
 async function createAccount() {
   startLoading();
   try {
     if (confirmPassword.value !== password.value) {
       addNotification({
-        group: "main",
         title: formatMessage(commonMessages.errorNotificationTitle),
         text: formatMessage({
           id: "auth.sign-up.notification.password-mismatch.text",
@@ -247,15 +247,13 @@ async function createAccount() {
       },
     });
 
-    if (route.query.launcher) {
-      await navigateTo(`https://launcher-files.modrinth.com/?code=${res.session}`, {
-        external: true,
-      });
-      return;
-    }
-
     await useAuth(res.session);
     await useUser();
+
+    if (route.query.launcher) {
+      await navigateTo({ path: "/auth/sign-in", query: route.query });
+      return;
+    }
 
     if (route.query.redirect) {
       await navigateTo(route.query.redirect);
@@ -264,7 +262,6 @@ async function createAccount() {
     }
   } catch (err) {
     addNotification({
-      group: "main",
       title: formatMessage(commonMessages.errorNotificationTitle),
       text: err.data ? err.data.description : err,
       type: "error",

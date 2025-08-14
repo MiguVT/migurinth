@@ -1,22 +1,22 @@
 <script setup>
+import { ChatIcon } from '@/assets/icons'
+import ModalWrapper from '@/components/ui/modal/ModalWrapper.vue'
+import { install } from '@/helpers/profile.js'
+import { cancel_directory_change } from '@/helpers/settings.ts'
+import { handleSevereError } from '@/store/error.js'
 import {
   CheckIcon,
+  CopyIcon,
   DropdownIcon,
-  XIcon,
   HammerIcon,
   LogInIcon,
   UpdatedIcon,
-  CopyIcon,
+  XIcon,
 } from '@modrinth/assets'
-import { ChatIcon } from '@/assets/icons'
-import { ButtonStyled, Collapsible } from '@modrinth/ui'
-import { ref, computed, inject } from 'vue'
-import { handleError } from '@/store/notifications.js'
-import { handleSevereError } from '@/store/error.js'
-import { cancel_directory_change } from '@/helpers/settings.ts'
-import { install } from '@/helpers/profile.js'
-import ModalWrapper from '@/components/ui/modal/ModalWrapper.vue'
-import LoginModal from '@/components/ui/modal/LoginModal.vue'
+import { ButtonStyled, Collapsible, injectNotificationManager } from '@modrinth/ui'
+import { computed, ref } from 'vue'
+
+const { handleError } = injectNotificationManager()
 
 const errorModal = ref()
 const error = ref()

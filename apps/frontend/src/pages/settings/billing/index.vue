@@ -208,15 +208,7 @@
             <div class="flex flex-col gap-2">
               <UiServersServerListing
                 v-if="subscription.serverInfo"
-                :server_id="subscription.serverInfo.server_id"
-                :name="subscription.serverInfo.name"
-                :status="subscription.serverInfo.status"
-                :game="subscription.serverInfo.game"
-                :loader="subscription.serverInfo.loader"
-                :loader_version="subscription.serverInfo.loader_version"
-                :mc_version="subscription.serverInfo.mc_version"
-                :upstream="subscription.serverInfo.upstream"
-                :net="subscription.serverInfo.net"
+                v-bind="subscription.serverInfo"
               />
               <div v-else class="w-fit">
                 <p>
@@ -400,8 +392,7 @@
       "
       :on-error="
         (err) =>
-          data.$notify({
-            group: 'main',
+          addNotification({
             title: 'An error occurred',
             type: 'error',
             text: err.message ?? (err.data ? err.data.description : err),
@@ -430,8 +421,7 @@
       :renewal-date="currentSubRenewalDate"
       :on-error="
         (err) =>
-          data.$notify({
-            group: 'main',
+          addNotification({
             title: 'An error occurred',
             type: 'error',
             text: err.message ?? (err.data ? err.data.description : err),
@@ -562,43 +552,44 @@
 
 <script setup>
 import {
-  ConfirmModal,
+  ArrowBigUpDashIcon,
+  CardIcon,
+  CheckCircleIcon,
+  CurrencyIcon,
+  EditIcon,
+  HistoryIcon,
+  ModrinthPlusIcon,
+  MoreVerticalIcon,
+  PayPalIcon,
+  PlusIcon,
+  RightArrowIcon,
+  SpinnerIcon,
+  StarIcon,
+  TransferIcon,
+  TrashIcon,
+  UpdatedIcon,
+  XIcon,
+} from "@modrinth/assets";
+import {
   AddPaymentMethodModal,
+  ButtonStyled,
+  ConfirmModal,
+  CopyCode,
   OverflowMenu,
   PurchaseModal,
-  ButtonStyled,
-  CopyCode,
   commonMessages,
+  injectNotificationManager,
 } from "@modrinth/ui";
-import {
-  PlusIcon,
-  TransferIcon,
-  SpinnerIcon,
-  ArrowBigUpDashIcon,
-  XIcon,
-  CardIcon,
-  MoreVerticalIcon,
-  TrashIcon,
-  EditIcon,
-  StarIcon,
-  PayPalIcon,
-  CurrencyIcon,
-  CheckCircleIcon,
-  RightArrowIcon,
-  ModrinthPlusIcon,
-  UpdatedIcon,
-  HistoryIcon,
-} from "@modrinth/assets";
 import { calculateSavings, formatPrice, getCurrency } from "@modrinth/utils";
-import { ref, computed } from "vue";
+import { computed, ref } from "vue";
 import { useServersFetch } from "~/composables/servers/servers-fetch.ts";
 import { products } from "~/generated/state.json";
 
+const { addNotification } = injectNotificationManager();
 definePageMeta({
   middleware: "auth",
 });
 
-const app = useNuxtApp();
 const auth = await useAuth();
 const baseId = useId();
 
@@ -612,7 +603,6 @@ useHead({
   ],
 });
 
-const data = useNuxtApp();
 const config = useRuntimeConfig();
 
 const vintl = useVIntl();
@@ -853,8 +843,7 @@ async function editPaymentMethod(index, primary) {
     });
     await refresh();
   } catch (err) {
-    data.$notify({
-      group: "main",
+    addNotification({
       title: "An error occurred",
       text: err.data ? err.data.description : err,
       type: "error",
@@ -872,8 +861,7 @@ async function removePaymentMethod(index) {
     });
     await refresh();
   } catch (err) {
-    data.$notify({
-      group: "main",
+    addNotification({
       title: "An error occurred",
       text: err.data ? err.data.description : err,
       type: "error",
@@ -895,8 +883,7 @@ async function cancelSubscription(id, cancelled) {
     });
     await refresh();
   } catch (err) {
-    data.$notify({
-      group: "main",
+    addNotification({
       title: "An error occurred",
       text: err.data ? err.data.description : err,
       type: "error",
@@ -963,8 +950,7 @@ const showPyroUpgradeModal = async (subscription) => {
 
   if (!currentProduct.value) {
     console.error("Could not find product for current subscription");
-    data.$notify({
-      group: "main",
+    addNotification({
       title: "An error occurred",
       text: "Could not find product for current subscription",
       type: "error",
@@ -996,8 +982,7 @@ async function fetchCapacityStatuses(serverId, product) {
       };
     } catch (error) {
       console.error("Error checking server capacities:", error);
-      app.$notify({
-        group: "main",
+      addNotification({
         title: "Error checking server capacities",
         text: error,
         type: "error",
@@ -1023,23 +1008,20 @@ const resubscribePyro = async (subscriptionId, wasSuspended) => {
     });
     await refresh();
     if (wasSuspended) {
-      data.$notify({
-        group: "main",
+      addNotification({
         title: "Resubscription request submitted",
         text: "If the server is currently suspended, it may take up to 10 minutes for another charge attempt to be made.",
         type: "success",
       });
     } else {
-      data.$notify({
-        group: "main",
+      addNotification({
         title: "Success",
         text: "Server subscription resubscribed successfully",
         type: "success",
       });
     }
   } catch {
-    data.$notify({
-      group: "main",
+    addNotification({
       title: "Error resubscribing",
       text: "An error occurred while resubscribing to your Modrinth server.",
       type: "error",

@@ -18,7 +18,14 @@ export type DonationPlatform =
   | { short: 'ko-fi'; name: 'Ko-fi' }
   | { short: 'other'; name: 'Other' }
 
-export type ProjectType = 'mod' | 'modpack' | 'resourcepack' | 'shader'
+export type ProjectType =
+  | 'mod'
+  | 'modpack'
+  | 'resourcepack'
+  | 'shader'
+  | 'plugin'
+  | 'datapack'
+  | 'project'
 export type MonetizationStatus = 'monetized' | 'demonetized' | 'force-demonetized'
 
 export type GameVersion = string
@@ -41,6 +48,76 @@ export interface GalleryImage {
   title?: string
   description?: string
 }
+
+export interface ProjectV3 {
+  id: ModrinthId
+  slug?: string
+  project_types: string[]
+  games: string[]
+  team_id: ModrinthId
+  organization?: ModrinthId
+  name: string
+  summary: string
+  description: string
+
+  published: string
+  updated: string
+  approved?: string
+  queued?: string
+
+  status: ProjectStatus
+  requested_status?: ProjectStatus
+
+  /** @deprecated moved to threads system */
+  moderator_message?: {
+    message: string
+    body?: string
+  }
+
+  license: {
+    id: string
+    name: string
+    url?: string
+  }
+
+  downloads: number
+  followers: number
+
+  categories: string[]
+  additional_categories: string[]
+  loaders: string[]
+
+  versions: ModrinthId[]
+  icon_url?: string
+
+  link_urls: Record<
+    string,
+    {
+      platform: string
+      donation: boolean
+      url: string
+    }
+  >
+
+  gallery: {
+    url: string
+    raw_url: string
+    featured: boolean
+    name?: string
+    description?: string
+    created: string
+    ordering: number
+  }[]
+
+  color?: number
+  thread_id: ModrinthId
+  monetization_status: MonetizationStatus
+  side_types_migration_review_status: 'reviewed' | 'pending'
+
+  [key: string]: unknown
+}
+
+export type SideTypesMigrationReviewStatus = 'reviewed' | 'pending'
 
 export interface Project {
   id: ModrinthId
@@ -65,17 +142,19 @@ export interface Project {
   client_side: Environment
   server_side: Environment
 
-  team: ModrinthId
+  team?: ModrinthId
+  team_id: ModrinthId
   thread_id: ModrinthId
   organization: ModrinthId
 
-  issues_url?: string
-  source_url?: string
-  wiki_url?: string
-  discord_url?: string
+  issues_url: string | null
+  source_url: string | null
+  wiki_url: string | null
+  discord_url: string | null
   donation_urls: DonationLink<DonationPlatform>[]
 
   published: string
+  created?: string
   updated: string
   approved: string
   queued: string
@@ -295,6 +374,60 @@ export type Report = {
   body: string
 }
 
+// Threads
+export interface Thread {
+  id: string
+  type: ThreadType
+  project_id: string | null
+  report_id: string | null
+  messages: ThreadMessage[]
+  members: User[]
+}
+
+export type ThreadType = 'project' | 'report' | 'direct_message'
+
+export interface ThreadMessage {
+  id: string | null
+  author_id: string | null
+  body: MessageBody
+  created: string
+  hide_identity: boolean
+}
+
+export type MessageBody =
+  | TextMessageBody
+  | StatusChangeMessageBody
+  | ThreadClosureMessageBody
+  | ThreadReopenMessageBody
+  | DeletedMessageBody
+
+export interface TextMessageBody {
+  type: 'text'
+  body: string
+  private: boolean
+  replying_to: string | null
+  associated_images: string[]
+}
+
+export interface StatusChangeMessageBody {
+  type: 'status_change'
+  new_status: ProjectStatus
+  old_status: ProjectStatus
+}
+
+export interface ThreadClosureMessageBody {
+  type: 'thread_closure'
+}
+
+export interface ThreadReopenMessageBody {
+  type: 'thread_reopen'
+}
+
+export interface DeletedMessageBody {
+  type: 'deleted'
+  private: boolean
+}
+
 // Moderation
 export interface ModerationModpackPermissionApprovalType {
   id:
@@ -315,7 +448,7 @@ export interface ModerationPermissionType {
 export interface ModerationBaseModpackItem {
   sha1: string
   file_name: string
-  type: 'unknown' | 'flame'
+  type: 'unknown' | 'flame' | 'identified'
   status: ModerationModpackPermissionApprovalType['id'] | null
   approved: ModerationPermissionType['id'] | null
 }
@@ -334,9 +467,26 @@ export interface ModerationFlameModpackItem extends ModerationBaseModpackItem {
   url: string
 }
 
-export type ModerationModpackItem = ModerationUnknownModpackItem | ModerationFlameModpackItem
+export interface ModerationIdentifiedModpackItem extends ModerationBaseModpackItem {
+  type: 'identified'
+  proof?: string
+  url?: string
+  title?: string
+}
+
+export type ModerationModpackItem =
+  | ModerationUnknownModpackItem
+  | ModerationFlameModpackItem
+  | ModerationIdentifiedModpackItem
 
 export interface ModerationModpackResponse {
+  identified?: Record<
+    string,
+    {
+      file_name: string
+      status: ModerationModpackPermissionApprovalType['id']
+    }
+  >
   unknown_files?: Record<string, string>
   flame_files?: Record<
     string,
@@ -350,8 +500,8 @@ export interface ModerationModpackResponse {
 }
 
 export interface ModerationJudgement {
-  type: 'flame' | 'unknown'
-  status: string
+  type: 'flame' | 'unknown' | 'identified'
+  status: string | null
   id?: string
   link?: string
   title?: string
@@ -361,4 +511,39 @@ export interface ModerationJudgement {
 
 export interface ModerationJudgements {
   [sha1: string]: ModerationJudgement
+}
+
+// Delphi
+export interface DelphiReport {
+  id: string
+  project: Project
+  version: Version
+  priority_score: number
+  detected_at: string
+  trace_type:
+    | 'reflection_indirection'
+    | 'xor_obfuscation'
+    | 'included_libraries'
+    | 'suspicious_binaries'
+    | 'corrupt_classes'
+    | 'suspicious_classes'
+    | 'url_usage'
+    | 'classloader_usage'
+    | 'processbuilder_usage'
+    | 'runtime_exec_usage'
+    | 'jni_usage'
+    | 'main_method'
+    | 'native_loading'
+    | 'malformed_jar'
+    | 'nested_jar_too_deep'
+    | 'failed_decompilation'
+    | 'analysis_failure'
+    | 'malware_easyforme'
+    | 'malware_simplyloader'
+  file_path: string
+  // pending = not reviewed yet.
+  // approved = approved as malicious, removed from modrinth
+  // rejected = not approved as malicious, remains on modrinth?
+  status: 'pending' | 'approved' | 'rejected'
+  content?: string
 }

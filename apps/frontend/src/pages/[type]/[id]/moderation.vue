@@ -76,8 +76,15 @@
       <p>
         This is a private conversation thread with the Modrinth moderators. They may message you
         with issues concerning this project. This thread is only checked when you submit your
-        project for review. For additional inquiries, contact
-        <a href="https://support.modrinth.com">Modrinth Support</a>.
+        project for review. For additional inquiries, please go to the
+        <a class="text-link" href="https://support.modrinth.com" target="_blank">
+          Modrinth Help Center
+        </a>
+        and click the green bubble to contact support.
+      </p>
+      <p v-if="isApproved(project)" class="warning">
+        <IssuesIcon /> The moderators do not actively monitor this chat. However, they may still see
+        messages here if there is a problem with your project.
       </p>
       <ConversationThread
         v-if="thread"
@@ -92,8 +99,8 @@
   </div>
 </template>
 <script setup>
-import { XIcon, CheckIcon, IssuesIcon } from "@modrinth/assets";
-import { Badge } from "@modrinth/ui";
+import { CheckIcon, IssuesIcon, XIcon } from "@modrinth/assets";
+import { Badge, injectNotificationManager } from "@modrinth/ui";
 import ConversationThread from "~/components/ui/thread/ConversationThread.vue";
 import {
   getProjectLink,
@@ -104,6 +111,7 @@ import {
   isUnderReview,
 } from "~/helpers/projects.js";
 
+const { addNotification } = injectNotificationManager();
 const props = defineProps({
   project: {
     type: Object,
@@ -124,7 +132,6 @@ const props = defineProps({
   },
 });
 
-const app = useNuxtApp();
 const auth = await useAuth();
 
 const { data: thread } = await useAsyncData(`thread/${props.project.thread_id}`, () =>
@@ -146,8 +153,7 @@ async function setStatus(status) {
     await props.resetProject();
     thread.value = await useBaseFetch(`thread/${thread.value.id}`);
   } catch (err) {
-    app.$notify({
-      group: "main",
+    addNotification({
       title: "An error occurred",
       text: err.data ? err.data.description : err,
       type: "error",
