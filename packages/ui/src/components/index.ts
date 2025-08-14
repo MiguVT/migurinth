@@ -121,5 +121,3 @@ export { default as ThemeSelector } from './settings/ThemeSelector.vue'
 
 // Servers
 export { default as ServersSpecs } from './billing/ServersSpecs.vue'
-export { default as BackupWarning } from './servers/backups/BackupWarning.vue'
-export { default as ServersPromo } from './servers/ServersPromo.vue'
