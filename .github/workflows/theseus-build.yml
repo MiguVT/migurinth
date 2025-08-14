@@ -71,6 +71,18 @@ jobs:
           rename-to: ${{ startsWith(matrix.platform, 'windows') && 'dasel.exe' || 'dasel' }}
           chmod: 0755
 
+      - name: 🏷️ Get version info
+        id: get-version-info
+        shell: bash
+        run: |
+          git fetch --tags --force
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          COMMIT_COUNT=$(git rev-list --count ${LATEST_TAG}..HEAD 2>/dev/null || echo "0")
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "latest-tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "commit-count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
+          echo "short-sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+
       - name: ⚙️ Set application version
         shell: bash
         env:
