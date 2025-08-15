@@ -89,7 +89,6 @@ import { get_default_user, remove_user, set_default_user, users } from '@/helper
 import { process_listener } from '@/helpers/events'
 import { getPlayerHeadUrl } from '@/helpers/rendering/batch-skin-renderer.ts'
 import { get_available_skins } from '@/helpers/skins'
-import { handleSevereError } from '@/store/error.js'
 
 const { handleError } = injectNotificationManager()
 
@@ -126,22 +125,23 @@ async function refreshValues() {
 
   // Only try to fetch skins for online accounts
   if (!isOfflineAccount) {
-    try {
-      const skins = await get_available_skins()
-      equippedSkin.value = skins.find((skin) => skin.is_equipped)
+		try {
+			const skins = await get_available_skins()
+			equippedSkin.value = skins.find((skin) => skin.is_equipped)
 
-    if (equippedSkin.value) {
-      try {
-        const headUrl = await getPlayerHeadUrl(equippedSkin.value)
-        headUrlCache.value.set(equippedSkin.value.texture_key, headUrl)
-      } catch (error) {
-        console.warn('Failed to get head render for equipped skin:', error)
-      }
-    }
-  } catch (error) {
-    console.warn('Failed to get available skins:', error)
-    equippedSkin.value = null
-  }
+			if (equippedSkin.value) {
+				try {
+					const headUrl = await getPlayerHeadUrl(equippedSkin.value)
+					headUrlCache.value.set(equippedSkin.value.texture_key, headUrl)
+				} catch (error) {
+					console.warn('Failed to get head render for equipped skin:', error)
+				}
+			}
+		} catch (error) {
+			console.warn('Failed to get available skins:', error)
+			equippedSkin.value = null
+		}
+	}
 }
 
 function setLoginDisabled(value) {
