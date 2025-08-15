@@ -1,82 +1,82 @@
 <template>
-  <div
-    v-if="mode !== 'isolated'"
-    ref="button"
-    class="button-base mt-2 px-3 py-2 bg-button-bg rounded-xl flex items-center gap-2"
-    :class="{ expanded: mode === 'expanded' }"
-    @click="toggleMenu"
-  >
-    <Avatar
-      size="36px"
-      :src="
-        selectedAccount ? avatarUrl : 'https://launcher-files.modrinth.com/assets/steve_head.png'
-      "
-    />
-    <div class="flex flex-col w-full">
-      <span>{{ selectedAccount ? selectedAccount.profile.name : 'Select account' }}</span>
-      <span class="text-secondary text-xs">{{ accountTypeText }}</span>
-    </div>
-    <DropdownIcon class="w-5 h-5 shrink-0" />
-  </div>
-  <transition name="fade">
-    <Card
-      v-if="showCard || mode === 'isolated'"
-      ref="card"
-      class="account-card"
-      :class="{ expanded: mode === 'expanded', isolated: mode === 'isolated' }"
-    >
-      <div v-if="selectedAccount" class="selected account">
-        <Avatar size="xs" :src="avatarUrl" />
-        <div>
-          <h4>{{ selectedAccount.profile.name }}</h4>
-          <p>Selected</p>
-        </div>
-        <Button
-          v-tooltip="'Log out'"
-          icon-only
-          color="raised"
-          @click="logout(selectedAccount.profile.id)"
-        >
-          <TrashIcon />
-        </Button>
-      </div>
-      <div v-else class="logged-out account">
-        <h4>Not signed in</h4>
-        <Button
-          v-tooltip="'Log in'"
-          :disabled="loginDisabled"
-          icon-only
-          color="primary"
-          @click="login()"
-        >
-          <LogInIcon v-if="!loginDisabled" />
-          <SpinnerIcon v-else class="animate-spin" />
-        </Button>
-      </div>
-      <div v-if="displayAccounts.length > 0" class="account-group">
-        <div v-for="account in displayAccounts" :key="account.profile.id" class="account-row">
-          <Button class="option account" @click="setAccount(account)">
-            <Avatar :src="getAccountAvatarUrl(account)" class="icon" />
-            <p>{{ account.profile.name }}</p>
-          </Button>
-          <Button v-tooltip="'Log out'" icon-only @click="logout(account.profile.id)">
-            <TrashIcon />
-          </Button>
-        </div>
-      </div>
-      <Button v-if="accounts.length > 0" @click="login()">
-        <PlusIcon />
-        Add account
-      </Button>
-    </Card>
-  </transition>
+	<div
+		v-if="mode !== 'isolated'"
+		ref="button"
+		class="button-base mt-2 px-3 py-2 bg-button-bg rounded-xl flex items-center gap-2"
+		:class="{ expanded: mode === 'expanded' }"
+		@click="toggleMenu"
+	>
+		<Avatar
+			size="36px"
+			:src="
+				selectedAccount ? avatarUrl : 'https://launcher-files.modrinth.com/assets/steve_head.png'
+			"
+		/>
+		<div class="flex flex-col w-full">
+			<span>{{ selectedAccount ? selectedAccount.profile.name : 'Select account' }}</span>
+			<span class="text-secondary text-xs">{{ accountTypeText }}</span>
+		</div>
+		<DropdownIcon class="w-5 h-5 shrink-0" />
+	</div>
+	<transition name="fade">
+		<Card
+			v-if="showCard || mode === 'isolated'"
+			ref="card"
+			class="account-card"
+			:class="{ expanded: mode === 'expanded', isolated: mode === 'isolated' }"
+		>
+			<div v-if="selectedAccount" class="selected account">
+				<Avatar size="xs" :src="avatarUrl" />
+				<div>
+					<h4>{{ selectedAccount.profile.name }}</h4>
+					<p>Selected</p>
+				</div>
+				<Button
+					v-tooltip="'Log out'"
+					icon-only
+					color="raised"
+					@click="logout(selectedAccount.profile.id)"
+				>
+					<TrashIcon />
+				</Button>
+			</div>
+			<div v-else class="logged-out account">
+				<h4>Not signed in</h4>
+				<Button
+					v-tooltip="'Log in'"
+					:disabled="loginDisabled"
+					icon-only
+					color="primary"
+					@click="login()"
+				>
+					<LogInIcon v-if="!loginDisabled" />
+					<SpinnerIcon v-else class="animate-spin" />
+				</Button>
+			</div>
+			<div v-if="displayAccounts.length > 0" class="account-group">
+				<div v-for="account in displayAccounts" :key="account.profile.id" class="account-row">
+					<Button class="option account" @click="setAccount(account)">
+						<Avatar :src="getAccountAvatarUrl(account)" class="icon" />
+						<p>{{ account.profile.name }}</p>
+					</Button>
+					<Button v-tooltip="'Log out'" icon-only @click="logout(account.profile.id)">
+						<TrashIcon />
+					</Button>
+				</div>
+			</div>
+			<Button v-if="accounts.length > 0" @click="login()">
+				<PlusIcon />
+				Add account
+			</Button>
+		</Card>
+	</transition>
 
-  <!-- Login Modal -->
-  <LoginModal
-    ref="loginModal"
-    @login-success="handleLoginSuccess"
-    @login-cancelled="handleLoginCancelled"
-  />
+	<!-- Login Modal -->
+	<LoginModal
+		ref="loginModal"
+		@login-success="handleLoginSuccess"
+		@login-cancelled="handleLoginCancelled"
+	/>
 </template>
 
 <script setup>
@@ -86,7 +86,12 @@ import { get_default_user, remove_user, set_default_user, users } from '@/helper
 import { process_listener } from '@/helpers/events'
 import { getPlayerHeadUrl } from '@/helpers/rendering/batch-skin-renderer.ts'
 import { get_available_skins } from '@/helpers/skins'
-import { handleError } from '@/store/state.js'
+import { AppNotificationManager } from '@/providers/app-notifications'
+
+const notificationManager = new AppNotificationManager()
+provideNotificationManager(notificationManager)
+const { handleError } = notificationManager
+
 import { DropdownIcon, LogInIcon, PlusIcon, SpinnerIcon, TrashIcon } from '@modrinth/assets'
 import { Avatar, Button, Card } from '@modrinth/ui'
 import { computed, onBeforeUnmount, onMounted, onUnmounted, ref } from 'vue'
@@ -112,35 +117,35 @@ async function refreshValues() {
 	defaultUser.value = await get_default_user().catch(handleError)
 	accounts.value = await users().catch(handleError)
 
-  // Clear previous skin data
-  equippedSkin.value = null
-  headUrlCache.value.clear()
+	// Clear previous skin data
+	equippedSkin.value = null
+	headUrlCache.value.clear()
 
-  // Check if the current account is offline
-  const currentAccount = accounts.value.find((account) => account.profile.id === defaultUser.value)
-  const isOfflineAccount =
-    currentAccount?.access_token?.startsWith('offline_token_') ||
-    currentAccount?.refresh_token?.startsWith('offline_refresh_')
+	// Check if the current account is offline
+	const currentAccount = accounts.value.find((account) => account.profile.id === defaultUser.value)
+	const isOfflineAccount =
+		currentAccount?.access_token?.startsWith('offline_token_') ||
+		currentAccount?.refresh_token?.startsWith('offline_refresh_')
 
-  // Only try to fetch skins for online accounts
-  if (!isOfflineAccount) {
-    try {
-      const skins = await get_available_skins()
-      equippedSkin.value = skins.find((skin) => skin.is_equipped)
+	// Only try to fetch skins for online accounts
+	if (!isOfflineAccount) {
+		try {
+			const skins = await get_available_skins()
+			equippedSkin.value = skins.find((skin) => skin.is_equipped)
 
-      if (equippedSkin.value) {
-        try {
-          const headUrl = await getPlayerHeadUrl(equippedSkin.value)
-          headUrlCache.value.set(equippedSkin.value.texture_key, headUrl)
-        } catch (error) {
-          console.warn('Failed to get head render for equipped skin:', error)
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to get available skins:', error)
-      equippedSkin.value = null
-    }
-  }
+			if (equippedSkin.value) {
+				try {
+					const headUrl = await getPlayerHeadUrl(equippedSkin.value)
+					headUrlCache.value.set(equippedSkin.value.texture_key, headUrl)
+				} catch (error) {
+					console.warn('Failed to get head render for equipped skin:', error)
+				}
+			}
+		} catch (error) {
+			console.warn('Failed to get available skins:', error)
+			equippedSkin.value = null
+		}
+	}
 }
 
 function setLoginDisabled(value) {
@@ -159,50 +164,50 @@ const displayAccounts = computed(() =>
 )
 
 const avatarUrl = computed(() => {
-  // Check if the selected account is offline
-  const isOfflineAccount =
-    selectedAccount.value?.access_token?.startsWith('offline_token_') ||
-    selectedAccount.value?.refresh_token?.startsWith('offline_refresh_')
+	// Check if the selected account is offline
+	const isOfflineAccount =
+		selectedAccount.value?.access_token?.startsWith('offline_token_') ||
+		selectedAccount.value?.refresh_token?.startsWith('offline_refresh_')
 
-  if (isOfflineAccount) {
-    // For offline accounts, always use Steve avatar
-    return 'https://launcher-files.modrinth.com/assets/steve_head.png'
-  }
+	if (isOfflineAccount) {
+		// For offline accounts, always use Steve avatar
+		return 'https://launcher-files.modrinth.com/assets/steve_head.png'
+	}
 
-  if (equippedSkin.value?.texture_key) {
-    const cachedUrl = headUrlCache.value.get(equippedSkin.value.texture_key)
-    if (cachedUrl) {
-      return cachedUrl
-    }
-    return `https://mc-heads.net/avatar/${equippedSkin.value.texture_key}/128`
-  }
-  if (selectedAccount.value?.profile?.id) {
-    return `https://mc-heads.net/avatar/${selectedAccount.value.profile.id}/128`
-  }
-  return 'https://launcher-files.modrinth.com/assets/steve_head.png'
+	if (equippedSkin.value?.texture_key) {
+		const cachedUrl = headUrlCache.value.get(equippedSkin.value.texture_key)
+		if (cachedUrl) {
+			return cachedUrl
+		}
+		return `https://mc-heads.net/avatar/${equippedSkin.value.texture_key}/128`
+	}
+	if (selectedAccount.value?.profile?.id) {
+		return `https://mc-heads.net/avatar/${selectedAccount.value.profile.id}/128`
+	}
+	return 'https://launcher-files.modrinth.com/assets/steve_head.png'
 })
 
 function getAccountAvatarUrl(account) {
-  // Check if this account is offline
-  const isOfflineAccount =
-    account.access_token?.startsWith('offline_token_') ||
-    account.refresh_token?.startsWith('offline_refresh_')
+	// Check if this account is offline
+	const isOfflineAccount =
+		account.access_token?.startsWith('offline_token_') ||
+		account.refresh_token?.startsWith('offline_refresh_')
 
-  if (isOfflineAccount) {
-    // For offline accounts, always use Steve avatar
-    return 'https://launcher-files.modrinth.com/assets/steve_head.png'
-  }
+	if (isOfflineAccount) {
+		// For offline accounts, always use Steve avatar
+		return 'https://launcher-files.modrinth.com/assets/steve_head.png'
+	}
 
-  if (
-    account.profile.id === selectedAccount.value?.profile?.id &&
-    equippedSkin.value?.texture_key
-  ) {
-    const cachedUrl = headUrlCache.value.get(equippedSkin.value.texture_key)
-    if (cachedUrl) {
-      return cachedUrl
-    }
-  }
-  return `https://mc-heads.net/avatar/${account.profile.id}/128`
+	if (
+		account.profile.id === selectedAccount.value?.profile?.id &&
+		equippedSkin.value?.texture_key
+	) {
+		const cachedUrl = headUrlCache.value.get(equippedSkin.value.texture_key)
+		if (cachedUrl) {
+			return cachedUrl
+		}
+	}
+	return `https://mc-heads.net/avatar/${account.profile.id}/128`
 }
 
 const selectedAccount = computed(() =>
@@ -210,47 +215,47 @@ const selectedAccount = computed(() =>
 )
 
 const accountTypeText = computed(() => {
-  if (!selectedAccount.value) {
-    return 'Not logged in'
-  }
+	if (!selectedAccount.value) {
+		return 'Not logged in'
+	}
 
-  const isOfflineAccount =
-    selectedAccount.value.access_token?.startsWith('offline_token_') ||
-    selectedAccount.value.refresh_token?.startsWith('offline_refresh_')
+	const isOfflineAccount =
+		selectedAccount.value.access_token?.startsWith('offline_token_') ||
+		selectedAccount.value.refresh_token?.startsWith('offline_refresh_')
 
-  return isOfflineAccount ? 'Offline Mode' : 'Microsoft Account'
+	return isOfflineAccount ? 'Offline Mode' : 'Microsoft Account'
 })
 
 async function setAccount(account) {
-  defaultUser.value = account.profile.id
-  await set_default_user(account.profile.id).catch(handleError)
-  await refreshValues() // Refresh to update skin data for the new account
-  emit('change')
+	defaultUser.value = account.profile.id
+	await set_default_user(account.profile.id).catch(handleError)
+	await refreshValues() // Refresh to update skin data for the new account
+	emit('change')
 }
 
 async function login() {
-  // Show the login modal instead of directly calling the login flow
-  loginModal.value?.show()
+	// Show the login modal instead of directly calling the login flow
+	loginModal.value?.show()
 }
 
 async function handleLoginSuccess(account) {
-  try {
-    // Both offline and Microsoft accounts use the same flow
-    // The login_offline() and login() functions already handle account creation and storage
-    await setAccount(account)
-    await refreshValues()
+	try {
+		// Both offline and Microsoft accounts use the same flow
+		// The login_offline() and login() functions already handle account creation and storage
+		await setAccount(account)
+		await refreshValues()
 
-    trackEvent('AccountLogIn', {
-      method: account.offline ? 'offline' : 'microsoft',
-    })
-  } catch (error) {
-    handleError(error)
-  }
+		trackEvent('AccountLogIn', {
+			method: account.offline ? 'offline' : 'microsoft',
+		})
+	} catch (error) {
+		handleError(error)
+	}
 }
 
 function handleLoginCancelled() {
-  // User cancelled the login process
-  console.log('Login cancelled by user')
+	// User cancelled the login process
+	console.log('Login cancelled by user')
 }
 
 const logout = async (id) => {
