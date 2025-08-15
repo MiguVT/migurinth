@@ -4,11 +4,15 @@ use crate::event::emit::{emit_loading, init_or_edit_loading};
 use crate::event::{LoadingBarId, LoadingBarType};
 use crate::launcher::download::download_log_config;
 use crate::launcher::io::IOError;
+use crate::launcher::quick_play_version::{
+    QuickPlayServerVersion, QuickPlayVersion,
+};
 use crate::profile::QuickPlayType;
 use crate::state::{
     Credentials, JavaVersion, ProcessMetadata, ProfileInstallStage,
 };
 use crate::util::io;
+use crate::util::rpc::RpcServerBuilder;
 use crate::{State, get_resource_file, process, state as st};
 use chrono::Utc;
 use daedalus as d;
@@ -19,12 +23,12 @@ use serde::Deserialize;
 use st::Profile;
 use std::fmt::Write;
 use std::path::PathBuf;
-use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 
 mod args;
 
 pub mod download;
+pub mod quick_play_version;
 
 // All nones -> disallowed
 // 1+ true -> allowed
@@ -337,10 +341,10 @@ pub async fn install_minecraft(
 
             // Forge processors (90-100)
             for (index, processor) in processors.iter().enumerate() {
-                if let Some(sides) = &processor.sides {
-                    if !sides.contains(&String::from("client")) {
-                        continue;
-                    }
+                if let Some(sides) = &processor.sides
+                    && !sides.contains(&String::from("client"))
+                {
+                    continue;
                 }
 
                 let cp = {
@@ -419,7 +423,7 @@ pub async fn install_minecraft(
 
 pub async fn read_protocol_version_from_jar(
     path: PathBuf,
-) -> crate::Result<Option<i32>> {
+) -> crate::Result<Option<u32>> {
     let zip = async_zip::tokio::read::fs::ZipFileReader::new(path).await?;
     let Some(entry_index) = zip
         .file()
@@ -432,7 +436,7 @@ pub async fn read_protocol_version_from_jar(
 
     #[derive(Deserialize, Debug)]
     struct VersionData {
-        protocol_version: Option<i32>,
+        protocol_version: Option<u32>,
     }
 
     let mut data = vec![];
@@ -457,7 +461,7 @@ pub async fn launch_minecraft(
     credentials: &Credentials,
     post_exit_hook: Option<String>,
     profile: &Profile,
-    quick_play_type: &QuickPlayType,
+    mut quick_play_type: QuickPlayType,
 ) -> crate::Result<ProcessMetadata> {
     if profile.install_stage == ProfileInstallStage::PackInstalling
         || profile.install_stage == ProfileInstallStage::MinecraftInstalling
@@ -589,8 +593,22 @@ pub async fn launch_minecraft(
         io::create_dir_all(&natives_dir).await?;
     }
 
+    let quick_play_version =
+        QuickPlayVersion::find_version(version_index, &minecraft.versions);
+    tracing::debug!(
+        "Found QuickPlayVersion for {}: {quick_play_version:?}",
+        profile.game_version
+    );
+    if let QuickPlayType::Server(address) = &mut quick_play_type
+        && quick_play_version.server >= QuickPlayServerVersion::BuiltinLegacy
+    {
+        address.resolve().await?;
+    }
+
     let (main_class_keep_alive, main_class_path) =
         get_resource_file!(env "JAVA_JARS_DIR" / "theseus.jar")?;
+
+    let rpc_server = RpcServerBuilder::new().launch().await?;
 
     command.args(
         args::get_jvm_arguments(
@@ -606,15 +624,18 @@ pub async fn launch_minecraft(
                 &java_version.architecture,
                 minecraft_updated,
             )?,
+            &main_class_path,
             &version_jar,
             *memory,
             Vec::from(java_args),
             &java_version.architecture,
-            quick_play_type,
+            &quick_play_type,
+            quick_play_version,
             version_info
                 .logging
                 .as_ref()
                 .and_then(|x| x.get(&LoggingSide::Client)),
+            rpc_server.address(),
         )?
         .into_iter(),
     );
@@ -646,7 +667,8 @@ pub async fn launch_minecraft(
                 &version.type_,
                 *resolution,
                 &java_version.architecture,
-                quick_play_type,
+                &quick_play_type,
+                quick_play_version,
             )
             .await?
             .into_iter(),
@@ -748,7 +770,8 @@ pub async fn launch_minecraft(
             state.directories.profile_logs_dir(&profile.path),
             version_info.logging.is_some(),
             main_class_keep_alive,
-            async |process: &ProcessMetadata, stdin| {
+            rpc_server,
+            async |process: &ProcessMetadata, rpc_server| {
                 let process_start_time = process.start_time.to_rfc3339();
                 let profile_created_time = profile.created.to_rfc3339();
                 let profile_modified_time = profile.modified.to_rfc3339();
@@ -771,14 +794,11 @@ pub async fn launch_minecraft(
                     let Some(value) = value else {
                         continue;
                     };
-                    stdin.write_all(b"property\t").await?;
-                    stdin.write_all(key.as_bytes()).await?;
-                    stdin.write_u8(b'\t').await?;
-                    stdin.write_all(value.as_bytes()).await?;
-                    stdin.write_u8(b'\n').await?;
+                    rpc_server
+                        .call_method_2::<()>("set_system_property", key, value)
+                        .await?;
                 }
-                stdin.write_all(b"launch\n").await?;
-                stdin.flush().await?;
+                rpc_server.call_method::<()>("launch").await?;
                 Ok(())
             },
         )
