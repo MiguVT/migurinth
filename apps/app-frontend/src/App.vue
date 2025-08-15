@@ -10,7 +10,6 @@ import { debugAnalytics, initAnalytics, optOutAnalytics, trackEvent } from '@/he
 import { command_listener, warning_listener } from '@/helpers/events.js'
 import { get } from '@/helpers/settings.ts'
 import { getOS, isDev, restartApp } from '@/helpers/utils.js'
-import { handleError } from '@/store/notifications.js'
 import { useLoading, useTheming } from '@/store/state'
 import {
 	ArrowBigUpDashIcon,
