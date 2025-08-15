@@ -156,33 +156,4 @@ function devModeCount() {
       </template>
     </TabbedModal>
   </ModalWrapper>
-		<TabbedModal :tabs="tabs.filter((t) => !t.developerOnly || themeStore.devMode)">
-			<template #footer>
-				<div class="mt-auto text-secondary text-sm">
-					<p v-if="themeStore.devMode" class="text-brand font-semibold m-0 mb-2">
-						{{ formatMessage(developerModeEnabled) }}
-					</p>
-					<div class="flex items-center gap-3">
-						<button
-							class="p-0 m-0 bg-transparent border-none cursor-pointer button-animation"
-							:class="{
-								'text-brand': themeStore.devMode,
-								'text-secondary': !themeStore.devMode,
-							}"
-							@click="devModeCount"
-						>
-						</button>
-						<div>
-							<p class="m-0">Migurinth {{ version }}</p>
-							<p class="m-0">
-								<span v-if="osPlatform === 'macos'">MacOS</span>
-								<span v-else class="capitalize">{{ osPlatform }}</span>
-								{{ osVersion }}
-							</p>
-						</div>
-					</div>
-				</div>
-			</template>
-		</TabbedModal>
-	</ModalWrapper>
 </template>

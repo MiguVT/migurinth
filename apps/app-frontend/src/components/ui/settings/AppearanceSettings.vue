@@ -50,7 +50,7 @@ watch(
 			:model-value="themeStore.advancedRendering"
 			@update:model-value="
 				(e) => {
-					themeStore.advancedRendering = e
+					themeStore.advancedRendering = e ?? false
 					settings.advanced_rendering = themeStore.advancedRendering
 				}
 			"
@@ -122,7 +122,7 @@ watch(
 			:model-value="settings.toggle_sidebar"
 			@update:model-value="
 				(e) => {
-					settings.toggle_sidebar = e
+					settings.toggle_sidebar = e ?? false
 					themeStore.toggleSidebar = settings.toggle_sidebar
 				}
 			"
