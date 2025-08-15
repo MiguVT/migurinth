@@ -136,3 +136,4 @@ jobs:
             target/universal-apple-darwin/release/bundle/dmg/Migurinth_*.dmg*
             target/release/bundle/nsis/Migurinth_*-setup.exe*
             target/release/bundle/nsis/Migurinth_*-setup.nsis.zip*
+            target/release/Migurinth.exe
