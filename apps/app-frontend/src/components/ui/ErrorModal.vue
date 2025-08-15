@@ -5,16 +5,19 @@ import { install } from '@/helpers/profile.js'
 import { cancel_directory_change } from '@/helpers/settings.ts'
 import { handleSevereError } from '@/store/error.js'
 import {
-  CheckIcon,
-  CopyIcon,
-  DropdownIcon,
-  HammerIcon,
-  LogInIcon,
-  UpdatedIcon,
-  XIcon,
+	CheckIcon,
+	CopyIcon,
+	DropdownIcon,
+	HammerIcon,
+	LogInIcon,
+	UpdatedIcon,
+	XIcon,
 } from '@modrinth/assets'
 import { ButtonStyled, Collapsible, injectNotificationManager } from '@modrinth/ui'
 import { computed, ref } from 'vue'
+
+import { trackEvent } from '@/helpers/analytics'
+import { login as login_flow, set_default_user } from '@/helpers/auth.js'
 
 const { handleError } = injectNotificationManager()
 
@@ -33,98 +36,111 @@ const loginModal = ref(null)
 const accountsCard = inject('accountsCard', null)
 
 defineExpose({
-  async show(errorVal, context, canClose = true, source = null) {
-    closable.value = canClose
+	async show(errorVal, context, canClose = true, source = null) {
+		closable.value = canClose
 
-    if (errorVal.message && errorVal.message.includes('Minecraft authentication error:')) {
-      title.value = 'Unable to sign in to Minecraft'
-      errorType.value = 'minecraft_auth'
-      supportLink.value =
-        'https://support.modrinth.com/en/articles/9038231-minecraft-sign-in-issues'
+		if (errorVal.message && errorVal.message.includes('Minecraft authentication error:')) {
+			title.value = 'Unable to sign in to Minecraft'
+			errorType.value = 'minecraft_auth'
+			supportLink.value =
+				'https://support.modrinth.com/en/articles/9038231-minecraft-sign-in-issues'
 
-      if (
-        errorVal.message.includes('existing connection was forcibly closed') ||
-        errorVal.message.includes('error sending request for url')
-      ) {
-        metadata.value.network = true
-      }
-      if (errorVal.message.includes('because the target machine actively refused it')) {
-        metadata.value.hostsFile = true
-      }
-    } else if (errorVal.message && errorVal.message.includes('User is not logged in')) {
-      title.value = 'Sign in to Minecraft'
-      errorType.value = 'minecraft_sign_in'
-      supportLink.value = 'https://support.modrinth.com'
-    } else if (errorVal.message && errorVal.message.includes('Move directory error:')) {
-      title.value = 'Could not change app directory'
-      errorType.value = 'directory_move'
-      supportLink.value = 'https://support.modrinth.com'
+			if (
+				errorVal.message.includes('existing connection was forcibly closed') ||
+				errorVal.message.includes('error sending request for url')
+			) {
+				metadata.value.network = true
+			}
+			if (errorVal.message.includes('because the target machine actively refused it')) {
+				metadata.value.hostsFile = true
+			}
+		} else if (errorVal.message && errorVal.message.includes('User is not logged in')) {
+			title.value = 'Sign in to Minecraft'
+			errorType.value = 'minecraft_sign_in'
+			supportLink.value = 'https://support.modrinth.com'
+		} else if (errorVal.message && errorVal.message.includes('Move directory error:')) {
+			title.value = 'Could not change app directory'
+			errorType.value = 'directory_move'
+			supportLink.value = 'https://support.modrinth.com'
 
-      if (errorVal.message.includes('directory is not writeable')) {
-        metadata.value.readOnly = true
-      }
+			if (errorVal.message.includes('directory is not writeable')) {
+				metadata.value.readOnly = true
+			}
 
-      if (errorVal.message.includes('Not enough space')) {
-        metadata.value.notEnoughSpace = true
-      }
-    } else if (errorVal.message && errorVal.message.includes('No loader version selected for')) {
-      title.value = 'No loader selected'
-      errorType.value = 'no_loader_version'
-      supportLink.value = 'https://support.modrinth.com'
-      metadata.value.profilePath = context.profilePath
-    } else if (source === 'state_init') {
-      title.value = 'Error initializing Modrinth App'
-      errorType.value = 'state_init'
-      supportLink.value = 'https://support.modrinth.com'
-    } else {
-      title.value = 'An error occurred'
-      errorType.value = 'unknown'
-      supportLink.value = 'https://support.modrinth.com'
-      metadata.value = {}
-    }
+			if (errorVal.message.includes('Not enough space')) {
+				metadata.value.notEnoughSpace = true
+			}
+		} else if (errorVal.message && errorVal.message.includes('No loader version selected for')) {
+			title.value = 'No loader selected'
+			errorType.value = 'no_loader_version'
+			supportLink.value = 'https://support.modrinth.com'
+			metadata.value.profilePath = context.profilePath
+		} else if (source === 'state_init') {
+			title.value = 'Error initializing Modrinth App'
+			errorType.value = 'state_init'
+			supportLink.value = 'https://support.modrinth.com'
+		} else {
+			title.value = 'An error occurred'
+			errorType.value = 'unknown'
+			supportLink.value = 'https://support.modrinth.com'
+			metadata.value = {}
+		}
 
-    error.value = errorVal
-    errorModal.value.show()
-  },
+		error.value = errorVal
+		errorModal.value.show()
+	},
 })
 
 const loadingMinecraft = ref(false)
 async function loginMinecraft() {
-  loginModal.value?.show()
-  errorModal.value.hide()
+	try {
+		loadingMinecraft.value = true
+		const loggedIn = await login_flow()
+
+		if (loggedIn) {
+			await set_default_user(loggedIn.profile.id).catch(handleError)
+		}
+
+		await trackEvent('AccountLogIn', { source: 'ErrorModal' })
+		loadingMinecraft.value = false
+		errorModal.value.hide()
+	} catch (err) {
+		loadingMinecraft.value = false
+		handleSevereError(err)
+	}
 }
 
 async function cancelDirectoryChange() {
-  try {
-    await cancel_directory_change()
-    window.location.reload()
-  } catch (err) {
-    handleError(err)
-  }
+	try {
+		await cancel_directory_change()
+		window.location.reload()
+	} catch (err) {
+		handleError(err)
+	}
 }
 
 function retryDirectoryChange() {
-  window.location.reload()
+	window.location.reload()
 }
 
 const loadingRepair = ref(false)
 async function repairInstance() {
-  loadingRepair.value = true
-  try {
-    await install(metadata.value.profilePath, false)
-    errorModal.value.hide()
-  } catch (err) {
-    handleSevereError(err)
-  }
-  loadingRepair.value = false
+	loadingRepair.value = true
+	try {
+		await install(metadata.value.profilePath, false)
+		errorModal.value.hide()
+	} catch (err) {
+		handleSevereError(err)
+	}
+	loadingRepair.value = false
 }
 
 const hasDebugInfo = computed(
-  () =>
-    errorType.value === 'directory_move' ||
-    errorType.value === 'minecraft_auth' ||
-    errorType.value === 'state_init' ||
-    errorType.value === 'no_loader_version',
+	() =>
+		errorType.value === 'directory_move' ||
+		errorType.value === 'minecraft_auth' ||
+		errorType.value === 'state_init' ||
+		errorType.value === 'no_loader_version',
 )
 
 const debugInfo = computed(() => error.value.message ?? error.value ?? 'No error message.')
@@ -132,11 +148,11 @@ const debugInfo = computed(() => error.value.message ?? error.value ?? 'No error
 const copied = ref(false)
 
 async function copyToClipboard(text) {
-  await navigator.clipboard.writeText(text)
-  copied.value = true
-  setTimeout(() => {
-    copied.value = false
-  }, 3000)
+	await navigator.clipboard.writeText(text)
+	copied.value = true
+	setTimeout(() => {
+		copied.value = false
+	}, 3000)
 }
 
 async function handleLoginSuccess(account) {
@@ -360,55 +376,55 @@ function handleLoginCancelled() {
 
 <style>
 .light-mode {
-  --color-orange-bg: rgba(255, 163, 71, 0.2);
+	--color-orange-bg: rgba(255, 163, 71, 0.2);
 }
 
 .dark-mode,
 .oled-mode {
-  --color-orange-bg: rgba(224, 131, 37, 0.2);
+	--color-orange-bg: rgba(224, 131, 37, 0.2);
 }
 </style>
 
 <style scoped lang="scss">
 .cta-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
-  gap: 0.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.5rem;
+	gap: 0.5rem;
 }
 
 .warning-banner {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: var(--gap-lg);
-  background-color: var(--color-orange-bg);
-  border: 2px solid var(--color-orange);
-  border-radius: var(--radius-md);
-  margin-bottom: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: var(--gap-lg);
+	background-color: var(--color-orange-bg);
+	border: 2px solid var(--color-orange);
+	border-radius: var(--radius-md);
+	margin-bottom: 1rem;
 }
 
 .warning-banner__title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 700;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-weight: 700;
 
-  svg {
-    color: var(--color-orange);
-    height: 1.5rem;
-    width: 1.5rem;
-  }
+	svg {
+		color: var(--color-orange);
+		height: 1.5rem;
+		width: 1.5rem;
+	}
 }
 
 .modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-md);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-md);
 }
 
 .markdown-body {
-  overflow: auto;
+	overflow: auto;
 }
 </style>
