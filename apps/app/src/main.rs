@@ -7,6 +7,7 @@ use native_dialog::{DialogBuilder, MessageLevel};
 use std::env;
 use tauri::{Listener, Manager};
 use theseus::prelude::*;
+use theseus::DirectoryInfo;
 
 mod api;
 mod error;
@@ -144,6 +145,8 @@ fn restart_app(app: tauri::AppHandle) {
 // if Tauri app is called with arguments, then those arguments will be treated as commands
 // ie: deep links or filepaths for .mrpacks
 fn main() {
+    // Set up portable environment as early as possible (before any other initialization)
+    DirectoryInfo::setup_portable_env();
     /*
         tracing is set basd on the environment variable RUST_LOG=xxx, depending on the amount of logs to show
             ERROR > WARN > INFO > DEBUG > TRACE
@@ -162,15 +165,10 @@ fn main() {
 
     tracing::info!("Initialized tracing subscriber. Loading Migurinth!");
 
-    // --- MIGURINTH PORTABLE DIR PATCH ---
-    // Get the portable directory path before Tauri is initialized
-    let portable_dir = theseus::state::dirs::DirectoryInfo::get_initial_settings_dir()
-        .unwrap_or_else(|| {
-            // fallback to default if not portable
-            dirs::data_dir().unwrap_or_else(|| std::env::current_dir().unwrap()).join("Migurinth")
-        });
+    // Get the settings directory (portable or not) for window state
+    let portable_dir = DirectoryInfo::get_initial_settings_dir()
+        .expect("Failed to determine Migurinth settings directory");
     let window_state_path = portable_dir.join("app-window-state.json");
-    // --- END PATCH ---
 
     let mut builder = tauri::Builder::default();
 
@@ -200,7 +198,7 @@ fn main() {
         .plugin(tauri_plugin_opener::init())
         .plugin(
             tauri_plugin_window_state::Builder::default()
-                .with_filename(window_state_path)
+                .with_filename(window_state_path.to_string_lossy())
                 .build(),
         )
         .setup(|app| {
