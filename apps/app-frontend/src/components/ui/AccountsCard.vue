@@ -81,20 +81,22 @@
 
 <script setup>
 import LoginModal from '@/components/ui/modal/LoginModal.vue'
+import { DropdownIcon, LogInIcon, PlusIcon, SpinnerIcon, TrashIcon } from '@modrinth/assets'
+import { Avatar, Button, Card, injectNotificationManager } from '@modrinth/ui'
+import { computed, onBeforeUnmount, onMounted, onUnmounted, ref } from 'vue'
+
 import { trackEvent } from '@/helpers/analytics'
-import { get_default_user, remove_user, set_default_user, users } from '@/helpers/auth'
+import {
+	get_default_user,
+	remove_user,
+	set_default_user,
+	users,
+} from '@/helpers/auth'
 import { process_listener } from '@/helpers/events'
 import { getPlayerHeadUrl } from '@/helpers/rendering/batch-skin-renderer.ts'
 import { get_available_skins } from '@/helpers/skins'
-import { AppNotificationManager } from '@/providers/app-notifications'
 
-const notificationManager = new AppNotificationManager()
-provideNotificationManager(notificationManager)
-const { handleError } = notificationManager
-
-import { DropdownIcon, LogInIcon, PlusIcon, SpinnerIcon, TrashIcon } from '@modrinth/assets'
-import { Avatar, Button, Card } from '@modrinth/ui'
-import { computed, onBeforeUnmount, onMounted, onUnmounted, ref } from 'vue'
+const { handleError } = injectNotificationManager()
 
 defineProps({
 	mode: {
@@ -188,7 +190,7 @@ const avatarUrl = computed(() => {
 })
 
 function getAccountAvatarUrl(account) {
-	// Check if this account is offline
+		// Check if this account is offline
 	const isOfflineAccount =
 		account.access_token?.startsWith('offline_token_') ||
 		account.refresh_token?.startsWith('offline_refresh_')
