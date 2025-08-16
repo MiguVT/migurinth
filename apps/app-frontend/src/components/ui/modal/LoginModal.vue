@@ -86,15 +86,15 @@ import ModalWrapper from '@/components/ui/modal/ModalWrapper.vue'
 import { trackEvent } from '@/helpers/analytics'
 import { login as login_flow, login_offline } from '@/helpers/auth'
 import { handleSevereError } from '@/store/error.js'
-import { handleError } from '@/store/state.js'
 import { LogInIcon, SpinnerIcon, UserIcon, XIcon } from '@modrinth/assets'
-import { Button } from '@modrinth/ui'
+import { Button, injectNotificationManager } from '@modrinth/ui'
 import { computed, ref } from 'vue'
 
 const emit = defineEmits(['login-success', 'login-cancelled'])
 
 const loginModal = ref(null)
 const showOfflineForm = ref(false)
+const { handleError } = injectNotificationManager()
 const offlineUsername = ref('')
 const usernameError = ref('')
 const isLoading = ref(false)
@@ -126,7 +126,6 @@ async function loginMicrosoft() {
 	try {
 		// Close offline form if it's open
 		showOfflineForm.value = false
-
 		isLoading.value = true
 		loadingMessage.value = 'Opening Microsoft login...'
 
@@ -187,6 +186,7 @@ async function createOfflineAccount() {
 	}
 }
 
+// Expose show/hide for parent usage
 defineExpose({
 	show,
 	hide,
