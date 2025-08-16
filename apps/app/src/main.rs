@@ -162,6 +162,16 @@ fn main() {
 
     tracing::info!("Initialized tracing subscriber. Loading Migurinth!");
 
+    // --- MIGURINTH PORTABLE DIR PATCH ---
+    // Get the portable directory path before Tauri is initialized
+    let portable_dir = theseus::state::dirs::DirectoryInfo::get_initial_settings_dir()
+        .unwrap_or_else(|| {
+            // fallback to default if not portable
+            dirs::data_dir().unwrap_or_else(|| std::env::current_dir().unwrap()).join("Migurinth")
+        });
+    let window_state_path = portable_dir.join("app-window-state.json");
+    // --- END PATCH ---
+
     let mut builder = tauri::Builder::default();
 
     #[cfg(feature = "updater")]
@@ -190,7 +200,7 @@ fn main() {
         .plugin(tauri_plugin_opener::init())
         .plugin(
             tauri_plugin_window_state::Builder::default()
-                .with_filename("app-window-state.json")
+                .with_filename(window_state_path)
                 .build(),
         )
         .setup(|app| {
