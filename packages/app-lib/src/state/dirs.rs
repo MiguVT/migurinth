@@ -21,6 +21,15 @@ pub struct DirectoryInfo {
 }
 
 impl DirectoryInfo {
+    /// Call this as early as possible in main() to ensure all dependencies use the correct portable directory.
+    ///
+    /// Example usage (at the very top of main.rs):
+    ///     theseus::DirectoryInfo::setup_portable_env();
+    pub fn setup_portable_env() {
+        if let Some(portable_dir) = Self::portable_data_dir() {
+            Self::set_portable_env(&portable_dir);
+        }
+    }
     /// Returns the path to the directory containing the running executable, if possible.
     fn exe_dir() -> Option<PathBuf> {
         std::env::current_exe().ok().and_then(|p| p.parent().map(|p| p.to_path_buf()))
