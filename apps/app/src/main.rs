@@ -7,6 +7,7 @@ use native_dialog::{DialogBuilder, MessageLevel};
 use std::env;
 use tauri::{Listener, Manager};
 use theseus::prelude::*;
+use app_lib::state::dirs::DirectoryInfo;
 
 mod api;
 mod error;
@@ -128,7 +129,7 @@ fn is_dev() -> bool {
 #[tauri::command]
 fn is_portable() -> bool {
     // Use the same portable detection logic
-    get_portable_dir().is_some()
+    DirectoryInfo::get_portable_dir().is_some()
 }
 
 // Toggles decorations

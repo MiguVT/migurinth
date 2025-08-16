@@ -21,7 +21,7 @@ pub struct DirectoryInfo {
 
 impl DirectoryInfo {
     /// Check if we're running in portable mode and return the portable directory
-    fn get_portable_dir() -> Option<std::path::PathBuf> {
+    pub fn get_portable_dir() -> Option<std::path::PathBuf> {
         let exe_path = std::env::current_exe().ok()?;
         let exe_dir = exe_path.parent()?;
 
