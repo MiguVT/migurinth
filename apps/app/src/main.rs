@@ -126,12 +126,6 @@ fn is_dev() -> bool {
     cfg!(debug_assertions)
 }
 
-#[tauri::command]
-fn is_portable() -> bool {
-    // Use the same portable detection logic
-    DirectoryInfo::get_portable_dir().is_some()
-}
-
 // Toggles decorations
 #[tauri::command]
 async fn toggle_decorations(b: bool, window: tauri::Window) -> api::Result<()> {
@@ -272,7 +266,6 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             initialize_state,
             is_dev,
-						is_portable,
             toggle_decorations,
             show_window,
             restart_app,
