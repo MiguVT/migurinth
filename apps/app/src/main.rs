@@ -7,7 +7,6 @@ use native_dialog::{DialogBuilder, MessageLevel};
 use std::env;
 use tauri::{Listener, Manager};
 use theseus::prelude::*;
-use app_lib::state::dirs::DirectoryInfo;
 
 mod api;
 mod error;
@@ -159,7 +158,6 @@ fn main() {
             RUST_LOG="theseus=trace" {run command}
 
     */
-
     let _log_guard = theseus::start_logger();
 
     tracing::info!("Initialized tracing subscriber. Loading Migurinth!");

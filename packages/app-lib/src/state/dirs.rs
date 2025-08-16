@@ -5,6 +5,7 @@ use crate::state::{JavaVersion, Profile, Settings};
 use crate::util::fetch::IoSemaphore;
 use dashmap::DashSet;
 use std::path::{Path, PathBuf};
+use std::env;
 use std::sync::Arc;
 use tokio::fs;
 
@@ -20,80 +21,61 @@ pub struct DirectoryInfo {
 }
 
 impl DirectoryInfo {
-    /// Check if we're running in portable mode and return the portable directory
-    pub fn get_portable_dir() -> Option<std::path::PathBuf> {
-        let exe_path = std::env::current_exe().ok()?;
-        let exe_dir = exe_path.parent()?;
+    /// Returns the path to the directory containing the running executable, if possible.
+    fn exe_dir() -> Option<PathBuf> {
+        std::env::current_exe().ok().and_then(|p| p.parent().map(|p| p.to_path_buf()))
+    }
 
-        // Method 1: Check if MODRINTH_PORTABLE environment variable is set
-        if std::env::var("MODRINTH_PORTABLE").is_ok() {
-            return Some(exe_dir.join("ModrinthAppData"));
+    /// Checks if portable mode is enabled (env or portable.txt) and returns the portable data dir if so.
+    fn portable_data_dir() -> Option<PathBuf> {
+        // 1. Environment variable takes precedence
+        if env::var_os("MODRINTH_PORTABLE").is_some() || env::var_os("MIGURINTH_PORTABLE").is_some() {
+            if let Some(exe_dir) = Self::exe_dir() {
+                return Some(exe_dir.join("MigurinthData"));
+            }
         }
-
-        // Method 2: Check if a "portable.txt" file exists next to the executable
-        if exe_dir.join("portable.txt").exists() {
-            return Some(exe_dir.join("ModrinthAppData"));
+        // 2. portable.txt file next to executable
+        if let Some(exe_dir) = Self::exe_dir() {
+            let portable_txt = exe_dir.join("portable.txt");
+            if portable_txt.exists() {
+                return Some(exe_dir.join("MigurinthData"));
+            }
         }
-
         None
     }
 
-    /// Set up environment variables for portable mode to ensure the window state plugin
-    /// respects the portable directory configuration.
-    fn setup_portable_env_vars() {
-        // Check if we're running in portable mode
-        let portable_dir = match Self::get_portable_dir() {
-            Some(dir) => dir,
-            None => return, // Not in portable mode
-        };
-
-        // Always create the ModrinthAppData directory if it doesn't exist
-        if let Err(e) = std::fs::create_dir_all(&portable_dir) {
-            eprintln!("Failed to create portable directory {}: {e}", portable_dir.display());
-        }
-
-        // Override the appropriate environment variable for each platform
-        // This ensures both tauri-plugin-window-state and dirs.rs use the portable directory
+    /// Sets the process environment variable for app data (e.g., APPDATA) to the portable dir if in portable mode.
+    fn set_portable_env(portable_dir: &Path) {
         #[cfg(target_os = "windows")]
-        {
-            unsafe {
-                std::env::set_var("APPDATA", &portable_dir);
-            }
-            eprintln!("Set APPDATA to {} for portable mode", portable_dir.display());
+        unsafe {
+            env::set_var("APPDATA", portable_dir);
         }
-
         #[cfg(target_os = "macos")]
-        {
-            let config_dir = portable_dir.join("Library").join("Application Support");
-            let _ = std::fs::create_dir_all(&config_dir);
-            unsafe {
-                std::env::set_var("HOME", &portable_dir);
-            }
-            eprintln!("Set HOME to {} for portable mode", portable_dir.display());
+        unsafe {
+            // macOS typically uses HOME/Library/Application Support, but we can override XDG_DATA_HOME for some libs
+            env::set_var("XDG_DATA_HOME", portable_dir);
         }
-
         #[cfg(target_os = "linux")]
-        {
-            let config_dir = portable_dir.join(".config");
-            let _ = std::fs::create_dir_all(&config_dir);
-            unsafe {
-                std::env::set_var("XDG_CONFIG_HOME", &config_dir);
-            }
-            eprintln!("Set XDG_CONFIG_HOME to {} for portable mode", config_dir.display());
+        unsafe {
+            env::set_var("XDG_DATA_HOME", portable_dir);
         }
     }
+
     // Get the settings directory
     // init() is not needed for this function
     pub fn get_initial_settings_dir() -> Option<PathBuf> {
+        if let Some(portable_dir) = Self::portable_data_dir() {
+            // Set env var for the process so all code uses portable dir
+            Self::set_portable_env(&portable_dir);
+            return Some(portable_dir);
+        }
         Self::env_path("THESEUS_CONFIG_DIR")
-            .or_else(|| Some(dirs::data_dir()?.join("MiguRinth")))
+            .or_else(|| Some(dirs::data_dir()?.join("Migurinth")))
     }
 
     /// Get all paths needed for Theseus to operate properly
     #[tracing::instrument]
     pub async fn init(config_dir: Option<String>) -> crate::Result<Self> {
-        // Ensure portable env is set up before using dirs
-        Self::setup_portable_env_vars();
         let settings_dir = Self::get_initial_settings_dir().ok_or(
             crate::ErrorKind::FSError(
                 "Could not find valid settings dir".to_string(),
@@ -232,7 +214,7 @@ impl DirectoryInfo {
     /// Get path from environment variable
     #[inline]
     fn env_path(name: &str) -> Option<PathBuf> {
-        std::env::var_os(name).map(PathBuf::from)
+        env::var_os(name).map(PathBuf::from)
     }
 
     #[tracing::instrument(skip(settings, exec, io_semaphore))]
