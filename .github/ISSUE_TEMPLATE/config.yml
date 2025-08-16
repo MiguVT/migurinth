@@ -1,5 +1,11 @@
 blank_issues_enabled: true
 contact_links:
+  - name: 🛠️ API issue (api.modrinth.com)
+    about: Report an issue regarding the Modrinth API. Problem is releated to Modrinth, this will redirect you to Modrinth issues.
+    url: https://github.com/modrinth/code/issues
+  - name: 🌐 Website bug (modrinth.com)
+    about: Report an issue on the Modrinth website. Problem is releated to Modrinth, this will redirect you to Modrinth issues.
+    url: https://github.com/modrinth/code/issues
   - name: 🫶 Support Portal
     about: Get support using through our portal.
     url: https://support.modrinth.com
