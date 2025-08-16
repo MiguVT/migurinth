@@ -83,18 +83,13 @@
 
 <script setup>
 import ModalWrapper from '@/components/ui/modal/ModalWrapper.vue'
+import { trackEvent } from '@/helpers/analytics'
 import { login as login_flow, login_offline } from '@/helpers/auth'
-import { AppNotificationManager } from '@/providers/app-notifications'
+import { handleSevereError } from '@/store/error.js'
+import { handleError } from '@/store/state.js'
 import { LogInIcon, SpinnerIcon, UserIcon, XIcon } from '@modrinth/assets'
 import { Button } from '@modrinth/ui'
 import { computed, ref } from 'vue'
-
-const notificationManager = new AppNotificationManager()
-provideNotificationManager(notificationManager)
-const { handleError } = notificationManager
-
-import { trackEvent } from '@/helpers/analytics'
-import { handleSevereError } from '@/store/error.js'
 
 const emit = defineEmits(['login-success', 'login-cancelled'])
 
