@@ -24,7 +24,7 @@ async fn initialize_state(app: tauri::AppHandle) -> api::Result<()> {
 
     #[cfg(feature = "updater")]
     'updater: {
-        if env::var("MODRINTH_EXTERNAL_UPDATE_PROVIDER").is_ok() {
+        if env::var("MODRINTH_EXTERNAL_UPDATE_PROVIDER").is_ok() || env::var("MIGURINTH_EXTERNAL_UPDATE_PROVIDER").is_ok() {
             State::init().await?;
             break 'updater;
         }
@@ -58,7 +58,7 @@ async fn initialize_state(app: tauri::AppHandle) -> api::Result<()> {
                     current_version: update.current_version.clone(),
                 },
                 1.0,
-                "Updating Migurinth...",
+                "Updating Migurinth App...",
             )
             .await?;
 
@@ -142,6 +142,11 @@ fn restart_app(app: tauri::AppHandle) {
     app.restart();
 }
 
+#[tauri::command]
+fn is_portable_mode() -> bool {
+    theseus::DirectoryInfo::is_portable_mode()
+}
+
 // if Tauri app is called with arguments, then those arguments will be treated as commands
 // ie: deep links or filepaths for .mrpacks
 fn main() {
@@ -163,12 +168,7 @@ fn main() {
     */
     let _log_guard = theseus::start_logger();
 
-    tracing::info!("Initialized tracing subscriber. Loading Migurinth!");
-
-    // Get the settings directory (portable or not) for window state
-    let portable_dir = DirectoryInfo::get_initial_settings_dir()
-        .expect("Failed to determine Migurinth settings directory");
-    let window_state_path = portable_dir.join("app-window-state.json");
+    tracing::info!("Initialized tracing subscriber. Loading Migurinth App!");
 
     let mut builder = tauri::Builder::default();
 
@@ -195,13 +195,18 @@ fn main() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_deep_link::init())
-        .plugin(tauri_plugin_opener::init())
-        .plugin(
+        .plugin(tauri_plugin_opener::init());
+
+    // Only add window state plugin if not portable
+    if !theseus::DirectoryInfo::is_portable_mode() {
+        builder = builder.plugin(
             tauri_plugin_window_state::Builder::default()
-                .with_filename(window_state_path.to_string_lossy())
+                .with_filename("app-window-state.json")
                 .build(),
-        )
-        .setup(|app| {
+        );
+    }
+
+    builder = builder.setup(|app| {
             #[cfg(target_os = "macos")]
             {
                 let payload = macos::deep_link::get_or_init_payload(app);
@@ -275,6 +280,7 @@ fn main() {
             toggle_decorations,
             show_window,
             restart_app,
+            is_portable_mode,
         ]);
 
     tracing::info!("Initializing app...");
@@ -321,7 +327,7 @@ fn main() {
                     DialogBuilder::message()
                         .set_level(MessageLevel::Error)
                         .set_title("Initialization error")
-                        .set_text("Your Microsoft Edge WebView2 installation is corrupt.\n\nMicrosoft Edge WebView2 is required to run Migurinth.\n\nLearn how to repair it at https://support.modrinth.com/en/articles/8797765-corrupted-microsoft-edge-webview2-installation")
+                        .set_text("Your Microsoft Edge WebView2 installation is corrupt.\n\nMicrosoft Edge WebView2 is required to run Migurinth App.\n\nLearn how to repair it at https://support.modrinth.com/en/articles/8797765-corrupted-microsoft-edge-webview2-installation")
                         .alert()
                         .show()
                         .unwrap();
