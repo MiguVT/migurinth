@@ -54,9 +54,9 @@ impl DirectoryInfo {
 
     /// Sets the process environment variable for config dir to the portable dir if in portable mode.
     fn set_portable_env(portable_dir: &Path) {
-        // Always set THESEUS_CONFIG_DIR for portable mode
         unsafe {
             env::set_var("THESEUS_CONFIG_DIR", portable_dir);
+            env::set_var("MODRINTH_EXTERNAL_UPDATE_PROVIDER", "true");
         }
         #[cfg(target_os = "windows")]
         unsafe {
