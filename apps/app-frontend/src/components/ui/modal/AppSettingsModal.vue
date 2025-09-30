@@ -8,10 +8,10 @@ import {
 	SettingsIcon,
 	ShieldIcon,
 } from '@modrinth/assets'
-import { TabbedModal } from '@modrinth/ui'
+import { ProgressBar, TabbedModal } from '@modrinth/ui'
 import { getVersion } from '@tauri-apps/api/app'
 import { platform as getOsPlatform, version as getOsVersion } from '@tauri-apps/plugin-os'
-import { defineMessage, useVIntl } from '@vintl/vintl'
+import { defineMessage, defineMessages, useVIntl } from '@vintl/vintl'
 import { computed, ref, watch } from 'vue'
 
 import ModalWrapper from '@/components/ui/modal/ModalWrapper.vue'
@@ -22,6 +22,7 @@ import JavaSettings from '@/components/ui/settings/JavaSettings.vue'
 import PrivacySettings from '@/components/ui/settings/PrivacySettings.vue'
 import ResourceManagementSettings from '@/components/ui/settings/ResourceManagementSettings.vue'
 import { get, set } from '@/helpers/settings.ts'
+import { injectAppUpdateDownloadProgress } from '@/providers/download-progress.ts'
 import { useTheming } from '@/store/state'
 
 const themeStore = useTheming()
@@ -97,6 +98,8 @@ const isOpen = computed(() => modal.value?.isOpen)
 
 defineExpose({ show, isOpen })
 
+const { progress, version: downloadingVersion } = injectAppUpdateDownloadProgress()
+
 const version = await getVersion()
 const osPlatform = getOsPlatform()
 const osVersion = getOsVersion()
@@ -122,6 +125,13 @@ function devModeCount() {
 		}
 	}
 }
+
+const messages = defineMessages({
+	downloading: {
+		id: 'app.settings.downloading',
+		defaultMessage: 'Downloading v{version}',
+	},
+})
 </script>
 <template>
 	<ModalWrapper ref="modal">
@@ -134,6 +144,14 @@ function devModeCount() {
 		<TabbedModal :tabs="tabs.filter((t) => !t.developerOnly || themeStore.devMode)">
 			<template #footer>
 				<div class="mt-auto text-secondary text-sm">
+					<div class="mb-3">
+						<template v-if="progress > 0 && progress < 1">
+							<p class="m-0 mb-2">
+								{{ formatMessage(messages.downloading, { downloadingVersion }) }}
+							</p>
+							<ProgressBar :progress="progress" />
+						</template>
+					</div>
 					<p v-if="themeStore.devMode" class="text-brand font-semibold m-0 mb-2">
 						{{ formatMessage(developerModeEnabled) }}
 					</p>
@@ -150,7 +168,7 @@ function devModeCount() {
 						<div>
 							<p class="m-0">Migurinth {{ version }}</p>
 							<p class="m-0">
-								<span v-if="osPlatform === 'macos'">MacOS</span>
+								<span v-if="osPlatform === 'macos'">macOS</span>
 								<span v-else class="capitalize">{{ osPlatform }}</span>
 								{{ osVersion }}
 							</p>

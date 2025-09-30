@@ -1,16 +1,4 @@
 <script setup>
-import ModrinthLoadingIndicator from '@/components/LoadingIndicatorBar.vue'
-import AccountsCard from '@/components/ui/AccountsCard.vue'
-import Breadcrumbs from '@/components/ui/Breadcrumbs.vue'
-import ErrorModal from '@/components/ui/ErrorModal.vue'
-import InstanceCreationModal from '@/components/ui/InstanceCreationModal.vue'
-import RunningAppBar from '@/components/ui/RunningAppBar.vue'
-import SplashScreen from '@/components/ui/SplashScreen.vue'
-import { debugAnalytics, initAnalytics, optOutAnalytics, trackEvent } from '@/helpers/analytics'
-import { command_listener, warning_listener } from '@/helpers/events.js'
-import { get } from '@/helpers/settings.ts'
-import { getOS, isDev, restartApp } from '@/helpers/utils.js'
-import { useLoading, useTheming } from '@/store/state'
 import {
 	ArrowBigUpDashIcon,
 	ChangeSkinIcon,
@@ -25,6 +13,7 @@ import {
 	MinimizeIcon,
 	NewspaperIcon,
 	PlusIcon,
+	RefreshCwIcon,
 	RestoreIcon,
 	RightArrowIcon,
 	SettingsIcon,
@@ -35,9 +24,11 @@ import {
 	Avatar,
 	Button,
 	ButtonStyled,
+	commonMessages,
 	NewsArticleCard,
 	NotificationPanel,
 	OverflowMenu,
+	ProgressSpinner,
 	provideNotificationManager,
 } from '@modrinth/ui'
 import { getVersion } from '@tauri-apps/api/app'
@@ -45,8 +36,8 @@ import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { type } from '@tauri-apps/plugin-os'
-import { check } from '@tauri-apps/plugin-updater'
 import { saveWindowState, StateFlags } from '@tauri-apps/plugin-window-state'
+import { defineMessages, useVIntl } from '@vintl/vintl'
 import { $fetch } from 'ofetch'
 import { computed, onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
@@ -60,6 +51,7 @@ import AuthGrantFlowWaitModal from '@/components/ui/modal/AuthGrantFlowWaitModal
 import NavButton from '@/components/ui/NavButton.vue'
 import PromotionWrapper from '@/components/ui/PromotionWrapper.vue'
 import QuickInstanceSwitcher from '@/components/ui/QuickInstanceSwitcher.vue'
+import UpdateToast from '@/components/ui/UpdateToast.vue'
 import URLConfirmModal from '@/components/ui/URLConfirmModal.vue'
 import { useCheckDisableMouseover } from '@/composables/macCssFix.js'
 import { hide_ads_window, init_ads_window, show_ads_window } from '@/helpers/ads.js'
@@ -67,7 +59,20 @@ import { get_user } from '@/helpers/cache.js'
 import { useFetch } from '@/helpers/fetch.js'
 import { cancelLogin, get as getCreds, login, logout } from '@/helpers/mr_auth.js'
 import { list } from '@/helpers/profile.js'
+import { get as getSettings, set as setSettings } from '@/helpers/settings.ts'
 import { get_opening_command, initialize_state } from '@/helpers/state'
+import {
+	areUpdatesEnabled,
+	enqueueUpdateForInstallation,
+	getOS,
+	getUpdateSize,
+	isDev,
+	isNetworkMetered,
+} from '@/helpers/utils.js'
+import {
+	provideAppUpdateDownloadProgress,
+	subscribeToDownloadProgress,
+} from '@/providers/download-progress.ts'
 import { useError } from '@/store/error.js'
 import { useInstall } from '@/store/install.js'
 
@@ -111,11 +116,39 @@ onMounted(async () => {
 
 	document.querySelector('body').addEventListener('click', handleClick)
 	document.querySelector('body').addEventListener('auxclick', handleAuxClick)
+
+	checkUpdates()
 })
 
-onUnmounted(() => {
+onUnmounted(async () => {
 	document.querySelector('body').removeEventListener('click', handleClick)
 	document.querySelector('body').removeEventListener('auxclick', handleAuxClick)
+
+	await unlistenUpdateDownload?.()
+})
+
+const { formatMessage } = useVIntl()
+const messages = defineMessages({
+	updateInstalledToastTitle: {
+		id: 'app.update.complete-toast.title',
+		defaultMessage: 'Version {version} was successfully installed!',
+	},
+	updateInstalledToastText: {
+		id: 'app.update.complete-toast.text',
+		defaultMessage: 'Click here to view the changelog.',
+	},
+	reloadToUpdate: {
+		id: 'app.update.reload-to-update',
+		defaultMessage: 'Reload to install update',
+	},
+	downloadUpdate: {
+		id: 'app.update.download-update',
+		defaultMessage: 'Download update',
+	},
+	downloadingUpdate: {
+		id: 'app.update.downloading-update',
+		defaultMessage: 'Downloading update ({percent}%)',
+	},
 })
 
 async function setupApp() {
@@ -131,7 +164,8 @@ async function setupApp() {
 		toggle_sidebar,
 		developer_mode,
 		feature_flags,
-	} = await get()
+		pending_update_toast_for_version,
+	} = await getSettings()
 
 	if (default_page === 'Library') {
 		await router.push('/library')
@@ -218,7 +252,6 @@ async function setupApp() {
 		})
 
 	get_opening_command().then(handleCommand)
-	checkUpdates()
 	fetchCredentials()
 
 	try {
@@ -227,6 +260,22 @@ async function setupApp() {
 		generateSkinPreviews(skins, capes)
 	} catch (error) {
 		console.warn('Failed to generate skin previews in app setup.', error)
+	}
+
+	if (pending_update_toast_for_version !== null) {
+		const settings = await getSettings()
+		settings.pending_update_toast_for_version = null
+		await setSettings(settings)
+
+		const version = await getVersion()
+		if (pending_update_toast_for_version === version) {
+			notifications.addNotification({
+				type: 'success',
+				title: formatMessage(messages.updateInstalledToastTitle, { version }),
+				text: formatMessage(messages.updateInstalledToastText),
+				clickAction: () => openUrl('https://modrinth.com/news/changelog?filter=app'),
+			})
+		}
 	}
 
 	if (osType === 'windows') {
@@ -377,17 +426,111 @@ async function handleCommand(e) {
 	}
 }
 
-const updateAvailable = ref(false)
-async function checkUpdates() {
-	const update = await check()
-	updateAvailable.value = !!update
+const appUpdateDownload = {
+	progress: ref(0),
+	version: ref(),
+}
+let unlistenUpdateDownload
 
+const downloadProgress = computed(() => appUpdateDownload.progress.value)
+const downloadPercent = computed(() => Math.trunc(appUpdateDownload.progress.value * 100))
+
+const metered = ref(true)
+const finishedDownloading = ref(false)
+const restarting = ref(false)
+const updateToastDismissed = ref(false)
+const availableUpdate = ref(null)
+const updateSize = ref(null)
+async function checkUpdates() {
+	if (!(await areUpdatesEnabled())) {
+		console.log('Skipping update check as updates are disabled in this build or environment')
+		return
+	}
+
+	async function performCheck() {
+		const update = await invoke('plugin:updater|check')
+		const isExistingUpdate = update.version === availableUpdate.value?.version
+
+		if (!update) {
+			console.log('No update available')
+			return
+		}
+
+		if (isExistingUpdate) {
+			console.log('Update is already known')
+			return
+		}
+
+		appUpdateDownload.progress.value = 0
+		finishedDownloading.value = false
+		updateToastDismissed.value = false
+
+		console.log(`Update ${update.version} is available.`)
+
+		metered.value = await isNetworkMetered()
+		if (!metered.value) {
+			console.log('Starting download of update')
+			downloadUpdate(update)
+		} else {
+			console.log(`Metered connection detected, not auto-downloading update.`)
+		}
+
+		getUpdateSize(update.rid).then((size) => (updateSize.value = size))
+
+		availableUpdate.value = update
+	}
+
+	await performCheck()
 	setTimeout(
 		() => {
 			checkUpdates()
 		},
-		5 * 1000 * 60,
+		5 /* min */ * 60 /* sec */ * 1000 /* ms */,
 	)
+}
+
+async function showUpdateToast() {
+	updateToastDismissed.value = false
+}
+
+async function downloadAvailableUpdate() {
+	return downloadUpdate(availableUpdate.value)
+}
+
+async function downloadUpdate(versionToDownload) {
+	if (!versionToDownload) {
+		handleError(`Failed to download update: no version available`)
+	}
+
+	if (appUpdateDownload.progress.value !== 0) {
+		console.error(`Update ${versionToDownload.version} already downloading`)
+		return
+	}
+
+	console.log(`Downloading update ${versionToDownload.version}`)
+
+	try {
+		enqueueUpdateForInstallation(versionToDownload.rid).then(() => {
+			finishedDownloading.value = true
+			unlistenUpdateDownload?.().then(() => {
+				unlistenUpdateDownload = null
+			})
+			console.log('Finished downloading!')
+		})
+		unlistenUpdateDownload = await subscribeToDownloadProgress(
+			appUpdateDownload,
+			versionToDownload.version,
+		)
+	} catch (e) {
+		handleError(e)
+	}
+}
+
+async function installUpdate() {
+	restarting.value = true
+	setTimeout(async () => {
+		await handleClose()
+	}, 250)
 }
 
 function handleClick(e) {
@@ -534,255 +677,353 @@ async function processPendingSurveys() {
 		console.info('No user survey to show')
 	}
 }
+
+provideAppUpdateDownloadProgress(appUpdateDownload)
 </script>
 
 <template>
-  <SplashScreen v-if="!stateFailed" ref="splashScreen" data-tauri-drag-region />
-  <div id="teleports"></div>
-  <div v-if="stateInitialized" class="app-grid-layout experimental-styles-within relative">
-    <Suspense>
-      <AppSettingsModal ref="settingsModal" />
-    </Suspense>
+	<SplashScreen v-if="!stateFailed" ref="splashScreen" data-tauri-drag-region />
+	<div id="teleports"></div>
+	<div v-if="stateInitialized" class="app-grid-layout experimental-styles-within relative">
+		<Suspense>
+			<Transition name="toast">
+				<UpdateToast
+					v-if="
+						!!availableUpdate &&
+						!updateToastDismissed &&
+						!restarting &&
+						(finishedDownloading || metered)
+					"
+					:version="availableUpdate.version"
+					:size="updateSize"
+					:metered="metered"
+					@close="updateToastDismissed = true"
+					@restart="installUpdate"
+					@download="downloadAvailableUpdate"
+				/>
+			</Transition>
+		</Suspense>
+		<Transition name="fade">
+			<div
+				v-if="restarting"
+				data-tauri-drag-region
+				class="inset-0 fixed bg-black/80 backdrop-blur z-[200] flex items-center justify-center"
+			>
+				<span
+					data-tauri-drag-region
+					class="flex items-center gap-4 text-contrast font-semibold text-xl select-none cursor-default"
+				>
+					<RefreshCwIcon data-tauri-drag-region class="animate-spin w-6 h-6" />
+					Restarting...
+				</span>
+			</div>
+		</Transition>
+		<Suspense>
+			<AppSettingsModal ref="settingsModal" />
+		</Suspense>
 		<Suspense>
 			<AuthGrantFlowWaitModal ref="modrinthLoginFlowWaitModal" @flow-cancel="cancelLogin" />
 		</Suspense>
-    <Suspense>
-      <InstanceCreationModal ref="installationModal" />
-    </Suspense>
-    <div
-      class="app-grid-navbar bg-bg-raised flex flex-col p-[0.5rem] pt-0 gap-[0.5rem] w-[--left-bar-width]"
-    >
-      <NavButton v-tooltip.right="'Home'" to="/">
-        <HomeIcon />
-      </NavButton>
-      <NavButton v-if="themeStore.featureFlags.worlds_tab" v-tooltip.right="'Worlds'" to="/worlds">
-        <WorldIcon />
-      </NavButton>
-      <NavButton
-        v-tooltip.right="'Discover content'"
-        to="/browse/modpack"
-        :is-primary="() => route.path.startsWith('/browse') && !route.query.i"
-        :is-subpage="(route) => route.path.startsWith('/project') && !route.query.i"
-      >
-        <CompassIcon />
-      </NavButton>
-      <NavButton v-tooltip.right="'Skins (Beta)'" to="/skins">
-        <ChangeSkinIcon />
-      </NavButton>
-      <NavButton
-        v-tooltip.right="'Library'"
-        to="/library"
-        :is-subpage="
-          () =>
-            route.path.startsWith('/instance') ||
-            ((route.path.startsWith('/browse') || route.path.startsWith('/project')) &&
-              route.query.i)
-        "
-      >
-        <LibraryIcon />
-      </NavButton>
-      <div class="h-px w-6 mx-auto my-2 bg-button-bg"></div>
-      <suspense>
-        <QuickInstanceSwitcher />
-      </suspense>
-      <NavButton
-        v-tooltip.right="'Create new instance'"
-        :to="() => $refs.installationModal.show()"
-        :disabled="offline"
-      >
-        <PlusIcon />
-      </NavButton>
-      <div class="flex flex-grow"></div>
-      <NavButton v-if="updateAvailable" v-tooltip.right="'Install update'" :to="() => restartApp()">
-        <DownloadIcon />
-      </NavButton>
-      <NavButton v-tooltip.right="'Settings'" :to="() => $refs.settingsModal.show()">
-        <SettingsIcon />
-      </NavButton>
-      <ButtonStyled v-if="credentials" type="transparent" circular>
-        <OverflowMenu
-          :options="[
-            {
-              id: 'sign-out',
-              action: () => logOut(),
-              color: 'danger',
-            },
-          ]"
-          direction="left"
-        >
-          <Avatar
-            :src="credentials.user.avatar_url"
-            :alt="credentials.user.username"
-            size="32px"
-            circle
-          />
-          <template #sign-out> <LogOutIcon /> Sign out </template>
-        </OverflowMenu>
-      </ButtonStyled>
-      <NavButton v-else v-tooltip.right="'Sign in'" :to="() => signIn()">
-        <LogInIcon />
-        <template #label>Sign in</template>
-      </NavButton>
-    </div>
-    <div data-tauri-drag-region class="app-grid-statusbar bg-bg-raised h-[--top-bar-height] flex">
-      <div data-tauri-drag-region class="flex p-3">
-        <div class="flex items-center gap-1">
-          <button
-            class="cursor-pointer p-0 m-0 text-contrast border-none outline-none bg-button-bg rounded-full flex items-center justify-center w-6 h-6 hover:brightness-75 transition-all"
-            @click="router.back()"
-          >
-            <LeftArrowIcon />
-          </button>
-          <button
-            class="cursor-pointer p-0 m-0 text-contrast border-none outline-none bg-button-bg rounded-full flex items-center justify-center w-6 h-6 hover:brightness-75 transition-all"
-            @click="router.forward()"
-          >
-            <RightArrowIcon />
-          </button>
-        </div>
-        <Breadcrumbs class="pt-[2px]" />
-      </div>
-      <section class="flex ml-auto items-center">
-        <ButtonStyled
-          v-if="!forceSidebar && themeStore.toggleSidebar"
-          :type="sidebarToggled ? 'standard' : 'transparent'"
-          circular
-        >
-          <button
-            class="mr-3 transition-transform"
-            :class="{ 'rotate-180': !sidebarToggled }"
-            @click="sidebarToggled = !sidebarToggled"
-          >
-            <RightArrowIcon />
-          </button>
-        </ButtonStyled>
-        <div class="flex mr-3">
-          <Suspense>
-            <RunningAppBar />
-          </Suspense>
-        </div>
-        <section v-if="!nativeDecorations" class="window-controls" data-tauri-drag-region-exclude>
-          <Button class="titlebar-button" icon-only @click="() => getCurrentWindow().minimize()">
-            <MinimizeIcon />
-          </Button>
-          <Button
-            class="titlebar-button"
-            icon-only
-            @click="() => getCurrentWindow().toggleMaximize()"
-          >
-            <RestoreIcon v-if="isMaximized" />
-            <MaximizeIcon v-else />
-          </Button>
-          <Button class="titlebar-button close" icon-only @click="handleClose">
-            <XIcon />
-          </Button>
-        </section>
-      </section>
-    </div>
-  </div>
-  <div
-    v-if="stateInitialized"
-    class="app-contents experimental-styles-within"
-    :class="{ 'sidebar-enabled': sidebarVisible }"
-  >
-    <div class="app-viewport flex-grow router-view">
-      <div
-        class="loading-indicator-container h-8 fixed z-50"
-        :style="{
-          top: 'calc(var(--top-bar-height))',
-          left: 'calc(var(--left-bar-width))',
-          width: 'calc(100% - var(--left-bar-width) - var(--right-bar-width))',
-        }"
-      >
-        <ModrinthLoadingIndicator />
-      </div>
-      <div
-        v-if="themeStore.featureFlags.page_path"
-        class="absolute bottom-0 left-0 m-2 bg-tooltip-bg text-tooltip-text font-semibold rounded-full px-2 py-1 text-xs z-50"
-      >
-        {{ route.fullPath }}
-      </div>
-      <div
-        id="background-teleport-target"
-        class="absolute h-full -z-10 rounded-tl-[--radius-xl] overflow-hidden"
-        :style="{
-          width: 'calc(100% - var(--right-bar-width))',
-        }"
-      ></div>
-      <div
-        v-if="criticalErrorMessage"
-        class="m-6 mb-0 flex flex-col border-red bg-bg-red rounded-2xl border-2 border-solid p-4 gap-1 font-semibold text-contrast"
-      >
-        <h1 class="m-0 text-lg font-extrabold">{{ criticalErrorMessage.header }}</h1>
-        <div
-          class="markdown-body text-primary"
-          v-html="renderString(criticalErrorMessage.body ?? '')"
-        ></div>
-      </div>
-      <RouterView v-slot="{ Component }">
-        <template v-if="Component">
-          <Suspense @pending="loading.startLoading()" @resolve="loading.stopLoading()">
-            <component :is="Component"></component>
-          </Suspense>
-        </template>
-      </RouterView>
-    </div>
-    <div
-      class="app-sidebar mt-px shrink-0 flex flex-col border-0 border-l-[1px] border-[--brand-gradient-border] border-solid overflow-auto"
-      :class="{ 'has-plus': hasPlus }"
-    >
-      <div
-        class="app-sidebar-scrollable flex-grow shrink overflow-y-auto relative"
-        :class="{ 'pb-12': !hasPlus }"
-      >
-        <div id="sidebar-teleport-target" class="sidebar-teleport-content"></div>
-        <div class="sidebar-default-content" :class="{ 'sidebar-enabled': sidebarVisible }">
-          <div class="p-4 border-0 border-b-[1px] border-[--brand-gradient-border] border-solid">
-            <h3 class="text-lg m-0">Playing as</h3>
-            <suspense>
-              <AccountsCard ref="accounts" mode="small" />
-            </suspense>
-          </div>
-          <div class="p-4 border-0 border-b-[1px] border-[--brand-gradient-border] border-solid">
-            <suspense>
-              <FriendsList :credentials="credentials" :sign-in="() => signIn()" />
-            </suspense>
-          </div>
-          <div v-if="news && news.length > 0" class="pt-4 flex flex-col items-center">
-            <h3 class="px-4 text-lg m-0 text-left w-full">News</h3>
-            <div class="px-4 pt-2 space-y-4 flex flex-col items-center w-full">
-              <NewsArticleCard
-                v-for="(item, index) in news"
-                :key="`news-${index}`"
-                :article="item"
-              />
-              <ButtonStyled color="brand" size="large">
-                <a href="https://modrinth.com/news" target="_blank" class="my-4">
-                  <NewspaperIcon /> View all news
-                </a>
-              </ButtonStyled>
-            </div>
-          </div>
-        </div>
-      </div>
-      <template v-if="showAd">
-        <a
-          href="https://modrinth.plus?app"
-          class="absolute bottom-[250px] w-full flex justify-center items-center gap-1 px-4 py-3 text-purple font-medium hover:underline z-10"
-          target="_blank"
-        >
-          <ArrowBigUpDashIcon class="text-2xl" /> Upgrade to Modrinth+
-        </a>
-        <PromotionWrapper />
-      </template>
-    </div>
-  </div>
-  <URLConfirmModal ref="urlModal" />
-  <NotificationPanel has-sidebar />
-  <ErrorModal ref="errorModal" />
-  <ModInstallModal ref="modInstallModal" />
-  <IncompatibilityWarningModal ref="incompatibilityWarningModal" />
-  <InstallConfirmModal ref="installConfirmModal" />
+		<Suspense>
+			<InstanceCreationModal ref="installationModal" />
+		</Suspense>
+		<div
+			class="app-grid-navbar bg-bg-raised flex flex-col p-[0.5rem] pt-0 gap-[0.5rem] w-[--left-bar-width]"
+		>
+			<NavButton v-tooltip.right="'Home'" to="/">
+				<HomeIcon />
+			</NavButton>
+			<NavButton v-if="themeStore.featureFlags.worlds_tab" v-tooltip.right="'Worlds'" to="/worlds">
+				<WorldIcon />
+			</NavButton>
+			<NavButton
+				v-tooltip.right="'Discover content'"
+				to="/browse/modpack"
+				:is-primary="() => route.path.startsWith('/browse') && !route.query.i"
+				:is-subpage="(route) => route.path.startsWith('/project') && !route.query.i"
+			>
+				<CompassIcon />
+			</NavButton>
+			<NavButton v-tooltip.right="'Skins (Beta)'" to="/skins">
+				<ChangeSkinIcon />
+			</NavButton>
+			<NavButton
+				v-tooltip.right="'Library'"
+				to="/library"
+				:is-subpage="
+					() =>
+						route.path.startsWith('/instance') ||
+						((route.path.startsWith('/browse') || route.path.startsWith('/project')) &&
+							route.query.i)
+				"
+			>
+				<LibraryIcon />
+			</NavButton>
+			<div class="h-px w-6 mx-auto my-2 bg-button-bg"></div>
+			<suspense>
+				<QuickInstanceSwitcher />
+			</suspense>
+			<NavButton
+				v-tooltip.right="'Create new instance'"
+				:to="() => $refs.installationModal.show()"
+				:disabled="offline"
+			>
+				<PlusIcon />
+			</NavButton>
+			<div class="flex flex-grow"></div>
+			<Transition name="nav-button-animated">
+				<div
+					v-if="
+						availableUpdate &&
+						updateToastDismissed &&
+						!restarting &&
+						(finishedDownloading || metered)
+					"
+				>
+					<NavButton
+						v-tooltip.right="
+							formatMessage(
+								finishedDownloading
+									? messages.reloadToUpdate
+									: downloadProgress === 0
+										? messages.downloadUpdate
+										: messages.downloadingUpdate,
+								{
+									percent: downloadPercent,
+								},
+							)
+						"
+						:to="
+							finishedDownloading
+								? installUpdate
+								: downloadProgress > 0 && downloadProgress < 1
+									? showUpdateToast
+									: downloadAvailableUpdate
+						"
+					>
+						<ProgressSpinner
+							v-if="downloadProgress > 0 && downloadProgress < 1"
+							class="text-brand"
+							:progress="downloadProgress"
+						/>
+						<RefreshCwIcon v-else-if="finishedDownloading" class="text-brand" />
+						<DownloadIcon v-else class="text-brand" />
+					</NavButton>
+				</div>
+			</Transition>
+			<NavButton
+				v-tooltip.right="formatMessage(commonMessages.settingsLabel)"
+				:to="() => $refs.settingsModal.show()"
+			>
+				<SettingsIcon />
+			</NavButton>
+			<ButtonStyled v-if="credentials" type="transparent" circular>
+				<OverflowMenu
+					:options="[
+						{
+							id: 'sign-out',
+							action: () => logOut(),
+							color: 'danger',
+						},
+					]"
+					direction="left"
+				>
+					<Avatar
+						:src="credentials.user.avatar_url"
+						:alt="credentials.user.username"
+						size="32px"
+						circle
+					/>
+					<template #sign-out> <LogOutIcon /> Sign out </template>
+				</OverflowMenu>
+			</ButtonStyled>
+			<NavButton v-else v-tooltip.right="'Sign in'" :to="() => signIn()">
+				<LogInIcon />
+				<template #label>Sign in</template>
+			</NavButton>
+		</div>
+		<div data-tauri-drag-region class="app-grid-statusbar bg-bg-raised h-[--top-bar-height] flex">
+			<div data-tauri-drag-region class="flex p-3">
+				<ModrinthAppLogo class="h-full w-auto text-contrast pointer-events-none" />
+				<div data-tauri-drag-region class="flex items-center gap-1 ml-3">
+					<button
+						class="cursor-pointer p-0 m-0 text-contrast border-none outline-none bg-button-bg rounded-full flex items-center justify-center w-6 h-6 hover:brightness-75 transition-all"
+						@click="router.back()"
+					>
+						<LeftArrowIcon />
+					</button>
+					<button
+						class="cursor-pointer p-0 m-0 text-contrast border-none outline-none bg-button-bg rounded-full flex items-center justify-center w-6 h-6 hover:brightness-75 transition-all"
+						@click="router.forward()"
+					>
+						<RightArrowIcon />
+					</button>
+				</div>
+				<Breadcrumbs class="pt-[2px]" />
+			</div>
+			<section data-tauri-drag-region class="flex ml-auto items-center">
+				<ButtonStyled
+					v-if="!forceSidebar && themeStore.toggleSidebar"
+					:type="sidebarToggled ? 'standard' : 'transparent'"
+					circular
+				>
+					<button
+						class="mr-3 transition-transform"
+						:class="{ 'rotate-180': !sidebarToggled }"
+						@click="sidebarToggled = !sidebarToggled"
+					>
+						<RightArrowIcon />
+					</button>
+				</ButtonStyled>
+				<div class="flex mr-3">
+					<Suspense>
+						<RunningAppBar />
+					</Suspense>
+				</div>
+				<section v-if="!nativeDecorations" class="window-controls" data-tauri-drag-region-exclude>
+					<Button class="titlebar-button" icon-only @click="() => getCurrentWindow().minimize()">
+						<MinimizeIcon />
+					</Button>
+					<Button
+						class="titlebar-button"
+						icon-only
+						@click="() => getCurrentWindow().toggleMaximize()"
+					>
+						<RestoreIcon v-if="isMaximized" />
+						<MaximizeIcon v-else />
+					</Button>
+					<Button class="titlebar-button close" icon-only @click="handleClose">
+						<XIcon />
+					</Button>
+				</section>
+			</section>
+		</div>
+	</div>
+	<div
+		v-if="stateInitialized"
+		class="app-contents experimental-styles-within"
+		:class="{ 'sidebar-enabled': sidebarVisible }"
+	>
+		<div class="app-viewport flex-grow router-view">
+			<transition name="popup-survey">
+				<div
+					v-if="availableSurvey"
+					class="w-[400px] z-20 fixed -bottom-12 pb-16 right-[--right-bar-width] mr-4 rounded-t-2xl card-shadow bg-bg-raised border-divider border-[1px] border-solid border-b-0 p-4"
+				>
+					<h2 class="text-lg font-extrabold mt-0 mb-2">Hey there Modrinth user!</h2>
+					<p class="m-0 leading-tight">
+						Would you mind answering a few questions about your experience with Modrinth App?
+					</p>
+					<p class="mt-3 mb-4 leading-tight">
+						This feedback will go directly to the Modrinth team and help guide future updates!
+					</p>
+					<div class="flex gap-2">
+						<ButtonStyled color="brand">
+							<button @click="openSurvey"><NotepadTextIcon /> Take survey</button>
+						</ButtonStyled>
+						<ButtonStyled>
+							<button @click="dismissSurvey"><XIcon /> No thanks</button>
+						</ButtonStyled>
+					</div>
+				</div>
+			</transition>
+			<div
+				class="loading-indicator-container h-8 fixed z-50"
+				:style="{
+					top: 'calc(var(--top-bar-height))',
+					left: 'calc(var(--left-bar-width))',
+					width: 'calc(100% - var(--left-bar-width) - var(--right-bar-width))',
+				}"
+			>
+				<ModrinthLoadingIndicator />
+			</div>
+			<div
+				v-if="themeStore.featureFlags.page_path"
+				class="absolute bottom-0 left-0 m-2 bg-tooltip-bg text-tooltip-text font-semibold rounded-full px-2 py-1 text-xs z-50"
+			>
+				{{ route.fullPath }}
+			</div>
+			<div
+				id="background-teleport-target"
+				class="absolute h-full -z-10 rounded-tl-[--radius-xl] overflow-hidden"
+				:style="{
+					width: 'calc(100% - var(--right-bar-width))',
+				}"
+			></div>
+			<div
+				v-if="criticalErrorMessage"
+				class="m-6 mb-0 flex flex-col border-red bg-bg-red rounded-2xl border-2 border-solid p-4 gap-1 font-semibold text-contrast"
+			>
+				<h1 class="m-0 text-lg font-extrabold">{{ criticalErrorMessage.header }}</h1>
+				<div
+					class="markdown-body text-primary"
+					v-html="renderString(criticalErrorMessage.body ?? '')"
+				></div>
+			</div>
+			<RouterView v-slot="{ Component }">
+				<template v-if="Component">
+					<Suspense @pending="loading.startLoading()" @resolve="loading.stopLoading()">
+						<component :is="Component"></component>
+					</Suspense>
+				</template>
+			</RouterView>
+		</div>
+		<div
+			class="app-sidebar mt-px shrink-0 flex flex-col border-0 border-l-[1px] border-[--brand-gradient-border] border-solid overflow-auto"
+			:class="{ 'has-plus': hasPlus }"
+		>
+			<div
+				class="app-sidebar-scrollable flex-grow shrink overflow-y-auto relative"
+				:class="{ 'pb-12': !hasPlus }"
+			>
+				<div id="sidebar-teleport-target" class="sidebar-teleport-content"></div>
+				<div class="sidebar-default-content" :class="{ 'sidebar-enabled': sidebarVisible }">
+					<div class="p-4 border-0 border-b-[1px] border-[--brand-gradient-border] border-solid">
+						<h3 class="text-lg m-0">Playing as</h3>
+						<suspense>
+							<AccountsCard ref="accounts" mode="small" />
+						</suspense>
+					</div>
+					<div class="p-4 border-0 border-b-[1px] border-[--brand-gradient-border] border-solid">
+						<suspense>
+							<FriendsList :credentials="credentials" :sign-in="() => signIn()" />
+						</suspense>
+					</div>
+					<div v-if="news && news.length > 0" class="pt-4 flex flex-col items-center">
+						<h3 class="px-4 text-lg m-0 text-left w-full">News</h3>
+						<div class="px-4 pt-2 space-y-4 flex flex-col items-center w-full">
+							<NewsArticleCard
+								v-for="(item, index) in news"
+								:key="`news-${index}`"
+								:article="item"
+							/>
+							<ButtonStyled color="brand" size="large">
+								<a href="https://modrinth.com/news" target="_blank" class="my-4">
+									<NewspaperIcon /> View all news
+								</a>
+							</ButtonStyled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<template v-if="showAd">
+				<a
+					href="https://modrinth.plus?app"
+					class="absolute bottom-[250px] w-full flex justify-center items-center gap-1 px-4 py-3 text-purple font-medium hover:underline z-10"
+					target="_blank"
+				>
+					<ArrowBigUpDashIcon class="text-2xl" /> Upgrade to Modrinth+
+				</a>
+				<PromotionWrapper />
+			</template>
+		</div>
+	</div>
+	<URLConfirmModal ref="urlModal" />
+	<NotificationPanel has-sidebar />
+	<ErrorModal ref="errorModal" />
+	<ModInstallModal ref="modInstallModal" />
+	<IncompatibilityWarningModal ref="incompatibilityWarningModal" />
+	<InstallConfirmModal ref="installConfirmModal" />
 </template>
 
 <style lang="scss" scoped>
@@ -876,10 +1117,6 @@ async function processPendingSurveys() {
 
 .app-grid-statusbar {
 	grid-area: status;
-}
-
-[data-tauri-drag-region] {
-	-webkit-app-region: drag;
 }
 
 [data-tauri-drag-region-exclude] {
@@ -1002,6 +1239,84 @@ async function processPendingSurveys() {
 .popup-survey-leave-to {
 	opacity: 0;
 	transform: translateY(10rem) scale(0.8) scaleY(1.6);
+}
+
+.toast-enter-active {
+	transition: opacity 0.25s linear;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.toast-enter-active,
+	.nav-button-animated-enter-active {
+		transition: all 0.5s cubic-bezier(0.15, 1.4, 0.64, 0.96);
+	}
+
+	.toast-leave-active,
+	.nav-button-animated-leave-active {
+		transition: all 0.25s ease;
+	}
+
+	.toast-enter-from {
+		scale: 0.5;
+		translate: 0 -10rem;
+		opacity: 0;
+	}
+
+	.toast-leave-to {
+		scale: 0.96;
+		translate: 20rem 0;
+		opacity: 0;
+	}
+
+	.nav-button-animated-enter-active {
+		position: relative;
+	}
+
+	.nav-button-animated-enter-active::before {
+		content: '';
+		inset: 0;
+		border-radius: 100vw;
+		background-color: var(--color-brand-highlight);
+		position: absolute;
+		animation: pop 0.5s ease-in forwards;
+		opacity: 0;
+	}
+
+	@keyframes pop {
+		0% {
+			scale: 0.5;
+		}
+		50% {
+			opacity: 0.5;
+		}
+		100% {
+			scale: 1.5;
+		}
+	}
+
+	.nav-button-animated-enter-from {
+		scale: 0.5;
+		translate: -2rem 0;
+		opacity: 0;
+	}
+
+	.nav-button-animated-leave-to {
+		scale: 0.75;
+		opacity: 0;
+	}
+
+	.fade-enter-active {
+		transition: 0.25s ease-in-out;
+	}
+
+	.fade-enter-from {
+		opacity: 0;
+	}
 }
 </style>
 <style>

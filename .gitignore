@@ -25,8 +25,11 @@ node_modules
 
 # IDE - IntelliJ
 .idea/*
-!.idea/modules.xml
 !.idea/code.iml
+!.idea/gradle.xml
+!.idea/icon.svg
+!.idea/modules.xml
+!.idea/vcs.xml
 
 # misc
 /.sass-cache

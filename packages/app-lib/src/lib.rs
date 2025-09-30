@@ -26,3 +26,9 @@ pub use event::{
 pub use logger::start_logger;
 pub use state::State;
 pub use state::dirs::DirectoryInfo;
+
+pub const LAUNCHER_USER_AGENT: &str = concat!(
+    "migurinth/theseus/",
+    env!("CARGO_PKG_VERSION"),
+    " (contacto@migurinth.com)"
+);
