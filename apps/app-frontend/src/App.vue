@@ -294,12 +294,6 @@ async function setupApp() {
 			})
 		}
 	}
-	addNotification({
-		type: 'info',
-		title: formatMessage(messages.portableUpdateAvailableTitle),
-		text: formatMessage(messages.portableUpdateAvailableText, { version: update.version }),
-		clickAction: () => openUrl('https://migurinth.miguvt.com/'),
-	})
 }
 
 const stateFailed = ref(false)
