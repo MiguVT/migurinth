@@ -56,7 +56,6 @@ impl DirectoryInfo {
     fn set_portable_env(portable_dir: &Path) {
         unsafe {
             env::set_var("THESEUS_CONFIG_DIR", portable_dir);
-            env::set_var("MODRINTH_EXTERNAL_UPDATE_PROVIDER", "true");
         }
         #[cfg(target_os = "windows")]
         unsafe {

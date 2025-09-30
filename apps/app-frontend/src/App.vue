@@ -18,7 +18,7 @@ import {
 	RightArrowIcon,
 	SettingsIcon,
 	WorldIcon,
-	XIcon
+	XIcon,
 } from '@modrinth/assets'
 import {
 	Avatar,
@@ -148,6 +148,15 @@ const messages = defineMessages({
 	downloadingUpdate: {
 		id: 'app.update.downloading-update',
 		defaultMessage: 'Downloading update ({percent}%)',
+	},
+	portableUpdateAvailableTitle: {
+		id: 'app.update.portable.available-title',
+		defaultMessage: 'Update Available',
+	},
+	portableUpdateAvailableText: {
+		id: 'app.update.portable.available-text',
+		defaultMessage:
+			'Version {version} is available, but auto-updater is not supported in portable installations. Please download the update manually from our website.',
 	},
 })
 
@@ -461,23 +470,42 @@ async function checkUpdates() {
 			return
 		}
 
+		// Check if we're in portable mode
+		let isPortable = false
+		try {
+			isPortable = !!(await invoke('is_portable_mode'))
+		} catch (err) {
+			console.warn('Failed to check portable mode:', err)
+		}
+
 		appUpdateDownload.progress.value = 0
 		finishedDownloading.value = false
 		updateToastDismissed.value = false
 
 		console.log(`Update ${update.version} is available.`)
 
-		metered.value = await isNetworkMetered()
-		if (!metered.value) {
-			console.log('Starting download of update')
-			downloadUpdate(update)
+		if (isPortable) {
+			// Show notification for portable installations
+			console.log('Portable mode detected, showing manual update notification')
+			addNotification({
+				type: 'info',
+				title: formatMessage(messages.portableUpdateAvailableTitle),
+				text: formatMessage(messages.portableUpdateAvailableText, { version: update.version }),
+				clickAction: () => openUrl('https://migurinth.miguvt.com/'),
+			})
 		} else {
-			console.log(`Metered connection detected, not auto-downloading update.`)
+			metered.value = await isNetworkMetered()
+			if (!metered.value) {
+				console.log('Starting download of update')
+				downloadUpdate(update)
+			} else {
+				console.log(`Metered connection detected, not auto-downloading update.`)
+			}
+
+			getUpdateSize(update.rid).then((size) => (updateSize.value = size))
+
+			availableUpdate.value = update
 		}
-
-		getUpdateSize(update.rid).then((size) => (updateSize.value = size))
-
-		availableUpdate.value = update
 	}
 
 	await performCheck()
