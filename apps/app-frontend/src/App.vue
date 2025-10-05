@@ -477,14 +477,9 @@ async function checkUpdates() {
 		console.log(`Update ${update.version} is available.`)
 
 		if (isPortable) {
-			// Show notification for portable installations
-			console.log('Portable mode detected, showing manual update notification')
-			addNotification({
-				type: 'info',
-				title: formatMessage(messages.portableUpdateAvailableTitle),
-				text: formatMessage(messages.portableUpdateAvailableText, { version: update.version }),
-				clickAction: () => openUrl('https://migurinth.miguvt.com/'),
-			})
+			// Show the update toast which will handle portable mode display
+			console.log('Portable mode detected, update toast will show download button')
+			availableUpdate.value = update
 		} else {
 			metered.value = await isNetworkMetered()
 			if (!metered.value) {

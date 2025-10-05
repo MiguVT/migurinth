@@ -2,8 +2,9 @@
 import { DownloadIcon, ExternalIcon, RefreshCwIcon, SpinnerIcon, XIcon } from '@modrinth/assets'
 import { ButtonStyled, commonMessages, ProgressBar } from '@modrinth/ui'
 import { formatBytes } from '@modrinth/utils'
+import { invoke } from '@tauri-apps/api/core'
 import { defineMessages, useVIntl } from '@vintl/vintl'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import { injectAppUpdateDownloadProgress } from '@/providers/download-progress.ts'
 
@@ -20,7 +21,16 @@ defineProps<{
 }>()
 
 const downloading = ref(false)
+const isPortable = ref(false)
 const { progress } = injectAppUpdateDownloadProgress()
+
+onMounted(async () => {
+	try {
+		isPortable.value = !!(await invoke('is_portable_mode'))
+	} catch (err) {
+		console.warn('Failed to check portable mode:', err)
+	}
+})
 
 function download() {
 	emit('download')
@@ -35,7 +45,7 @@ const messages = defineMessages({
 	body: {
 		id: 'app.update-toast.body',
 		defaultMessage:
-			'Modrinth App v{version} is ready to install! Reload to update now, or automatically when you close Modrinth App.',
+			'Migurinth App v{version} is ready to install! Reload to update now, or automatically when you close Migurinth App.',
 	},
 	reload: {
 		id: 'app.update-toast.reload',
@@ -51,11 +61,19 @@ const messages = defineMessages({
 	},
 	changelog: {
 		id: 'app.update-toast.changelog',
-		defaultMessage: 'Changelog',
+		defaultMessage: 'Modrinth Changelog',
+	},
+	changelogmigurinth: {
+		id: 'app.update-toast.changelog-migurinth',
+		defaultMessage: 'Migurinth Changelog',
 	},
 	meteredBody: {
 		id: 'app.update-toast.body.metered',
-		defaultMessage: `Modrinth App v{version} is available now! Since you're on a metered network, we didn't automatically download it.`,
+		defaultMessage: `Migurinth App v{version} is available now! Since you're on a metered network, we didn't automatically download it.`,
+	},
+	portableBody: {
+		id: 'app.update-toast.body.portable',
+		defaultMessage: `A new version of Migurinth App is available! Please visit our website to download the latest version.`,
 	},
 	downloadCompleteTitle: {
 		id: 'app.update-toast.title.download-complete',
@@ -63,7 +81,11 @@ const messages = defineMessages({
 	},
 	downloadedBody: {
 		id: 'app.update-toast.body.download-complete',
-		defaultMessage: `Modrinth App v{version} has finished downloading. Reload to update now, or automatically when you close Modrinth App.`,
+		defaultMessage: `Migurinth App v{version} has finished downloading. Reload to update now, or automatically when you close Migurinth App.`,
+	},
+	portableDownload: {
+		id: 'app.update-toast.portable-download',
+		defaultMessage: 'Download',
 	},
 })
 </script>
@@ -89,17 +111,19 @@ const messages = defineMessages({
 		<p class="text-sm mt-2 mb-0">
 			{{
 				formatMessage(
-					metered
-						? progress === 1
-							? messages.downloadedBody
-							: messages.meteredBody
-						: messages.body,
+					isPortable
+						? messages.portableBody
+						: metered
+							? progress === 1
+								? messages.downloadedBody
+								: messages.meteredBody
+							: messages.body,
 					{ version },
 				)
 			}}
 		</p>
 		<p
-			v-if="metered && progress < 1"
+			v-if="metered && progress < 1 && !isPortable"
 			class="text-sm text-secondary mt-2 mb-0 flex items-center gap-1"
 		>
 			<template v-if="progress > 0">
@@ -107,23 +131,36 @@ const messages = defineMessages({
 			</template>
 		</p>
 		<div class="flex gap-2 mt-4">
-			<ButtonStyled color="brand">
-				<button v-if="metered && progress < 1" :disabled="downloading" @click="download">
-					<SpinnerIcon v-if="downloading" class="animate-spin" />
-					<DownloadIcon v-else />
-					{{
-						formatMessage(downloading ? messages.downloading : messages.download, {
-							size: formatBytes(size ?? 0),
-						})
-					}}
-				</button>
-				<button v-else @click="emit('restart')">
-					<RefreshCwIcon /> {{ formatMessage(messages.reload) }}
-				</button>
+			<ButtonStyled v-if="isPortable" color="brand">
+				<a href="https://migurinth.miguvt.com/" target="_blank">
+					<DownloadIcon />
+					{{ formatMessage(messages.portableDownload) }}
+				</a>
 			</ButtonStyled>
+			<template v-else>
+				<ButtonStyled color="brand">
+					<button v-if="metered && progress < 1" :disabled="downloading" @click="download">
+						<SpinnerIcon v-if="downloading" class="animate-spin" />
+						<DownloadIcon v-else />
+						{{
+							formatMessage(downloading ? messages.downloading : messages.download, {
+								size: formatBytes(size ?? 0),
+							})
+						}}
+					</button>
+					<button v-else @click="emit('restart')">
+						<RefreshCwIcon /> {{ formatMessage(messages.reload) }}
+					</button>
+				</ButtonStyled>
+			</template>
 			<ButtonStyled>
 				<a href="https://modrinth.com/news/changelog?filter=app">
 					{{ formatMessage(messages.changelog) }} <ExternalIcon />
+				</a>
+			</ButtonStyled>
+			<ButtonStyled>
+				<a href="https://github.com/MiguVT/migurinth/blob/main/changelog.md">
+					{{ formatMessage(messages.changelogmigurinth) }} <ExternalIcon />
 				</a>
 			</ButtonStyled>
 		</div>
