@@ -9,9 +9,10 @@ import {
 	XIcon,
 } from '@modrinth/assets'
 import { ButtonStyled, Collapsible, injectNotificationManager } from '@modrinth/ui'
-import { computed, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 
 import { ChatIcon } from '@/assets/icons'
+import LoginModal from '@/components/ui/modal/LoginModal.vue'
 import ModalWrapper from '@/components/ui/modal/ModalWrapper.vue'
 import { install } from '@/helpers/profile.js'
 import { cancel_directory_change } from '@/helpers/settings.ts'
