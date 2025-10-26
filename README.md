@@ -9,6 +9,48 @@
 
 ---
 
+## ⚠️ **Important Notice - Project Status**
+
+> **📢 MiguRinth is currently in maintenance mode with limited updates (~once per month, sometimes more or less).**
+
+After extensive experience maintaining this fork and learning about the internal issues within Modrinth App's codebase, **we now recommend alternative launchers** that offer better stability, architecture, and development practices:
+
+### 🎯 **Recommended Alternatives**
+
+#### **For Low-End Systems (8GB RAM or less, multi-tasking)**
+- **[Prism Launcher](https://github.com/PrismLauncher/PrismLauncher)** - Lightweight, stable, and highly efficient
+  - For **offline/cracked support**: Use [**ElyPrismLauncher**](https://elyprismlauncher.github.io/)
+
+#### **For Mid to High-End Systems (16GB+ RAM)**
+- **[X Minecraft Launcher (XMCL)](https://xmcl.app/en/)** - Feature-rich with modern UI and unique capabilities
+  - **Offline/cracked support**: Currently no fork exists. If you need this feature, feel free to [**open an Issue**](https://github.com/MiguVT/migurinth/issues) and I'll be happy to create a fork with offline support.
+
+### 📦 **Portable Mode**
+Both **Prism Launcher** and **XMCL** (and their forks) include **native portable mode support** with much more organized and professional development practices than Modrinth App.
+
+---
+
+### 🚫 **Feature Requests Policy**
+
+**Issues requesting new features or improvements will NOT be implemented.** Here's why:
+
+- The **Modrinth development team** has demonstrated **zero collaboration** when it comes to accepting or implementing new features from the community
+- Their "if it works, don't touch it" philosophy has resulted in **poorly structured code** and **architectural limitations** that prevent meaningful improvements
+- The codebase has significant technical debt with **outdated/obsolete libraries** that cause frequent issues
+- **Every change we make risks breaking something else** due to the fragile codebase structure
+
+We believe in transparency: Modrinth's infrastructure for hosting mods and modpacks is excellent, but **the launcher itself has not been properly rewritten since its creation** and the team has not prioritized fixing fundamental architectural problems.
+
+---
+
+### 💙 **Thank You to Our Users**
+
+We are incredibly grateful for the support all our users have given us throughout this journey. We apologize that we have to maintain this limited update schedule, but the reality is that **Modrinth App's codebase makes it extremely difficult to implement changes without causing breakage**.
+
+**If you're a current MiguRinth user**, we encourage you to explore the alternatives mentioned above for a more stable, feature-rich experience with better long-term support.
+
+---
+
 ## 📚 Table of Contents
 
 - [🌱 **Migurinth**](#-migurinth)
