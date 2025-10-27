@@ -35,12 +35,6 @@ import _TwitterIcon from './external/twitter.svg?component'
 import _WindowsIcon from './external/windows.svg?component'
 import _YouTubeIcon from './external/youtube.svg?component'
 
-// Icons
-
-// Editor Icons
-
-import './omorphia.scss'
-
 export const ExcitedRinthbot = _ExcitedRinthbot
 export const FourOhFourNotFound = _FourOhFourNotFound
 export const SSODiscordIcon = _SSODiscordIcon
@@ -66,8 +60,6 @@ export const TwitterIcon = _TwitterIcon
 export const WindowsIcon = _WindowsIcon
 export const YouTubeIcon = _YouTubeIcon
 
-// Skin Models
 export * from './generated-icons'
 export { default as ClassicPlayerModel } from './models/classic-player.gltf?url'
 export { default as SlimPlayerModel } from './models/slim-player.gltf?url'
-

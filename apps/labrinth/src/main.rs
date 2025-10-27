@@ -12,8 +12,10 @@ use labrinth::queue::email::EmailQueue;
 use labrinth::search;
 use labrinth::util::anrok;
 use labrinth::util::env::parse_var;
+use labrinth::util::gotenberg::GotenbergClient;
 use labrinth::util::ratelimit::rate_limit_middleware;
-use labrinth::{check_env_vars, clickhouse, database, file_hosting, queue};
+use labrinth::utoipa_app_config;
+use labrinth::{check_env_vars, clickhouse, database, file_hosting};
 use std::ffi::CStr;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -24,6 +26,9 @@ use tracing_ecs::ECSLayerBuilder;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
+use utoipa::OpenApi;
+use utoipa_actix_web::AppExt;
+use utoipa_swagger_ui::SwaggerUi;
 
 #[cfg(target_os = "linux")]
 #[global_allocator]
@@ -113,6 +118,10 @@ async fn main() -> std::io::Result<()> {
         std::process::exit(1);
     }
 
+    rustls::crypto::aws_lc_rs::default_provider()
+        .install_default()
+        .unwrap();
+
     // DSN is from SENTRY_DSN env variable.
     // Has no effect if not set.
     let sentry = sentry::init(sentry::ClientOptions {
@@ -196,6 +205,9 @@ async fn main() -> std::io::Result<()> {
     let email_queue =
         EmailQueue::init(pool.clone(), redis_pool.clone()).unwrap();
 
+    let gotenberg_client =
+        GotenbergClient::from_env().expect("Failed to create Gotenberg client");
+
     if let Some(task) = args.run_background_task {
         info!("Running task {task:?} and exiting");
         task.run(
@@ -211,8 +223,7 @@ async fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    let maxmind_reader =
-        Arc::new(queue::maxmind::MaxMindIndexer::new().await.unwrap());
+    let maxmind_reader = modrinth_maxmind::MaxMind::new().await;
 
     let prometheus = PrometheusMetricsBuilder::new("labrinth")
         .endpoint("/metrics")
@@ -246,6 +257,7 @@ async fn main() -> std::io::Result<()> {
         stripe_client,
         anrok_client.clone(),
         email_queue,
+        gotenberg_client,
         !args.no_background_tasks,
     );
 
@@ -285,12 +297,22 @@ async fn main() -> std::io::Result<()> {
             .wrap(from_fn(rate_limit_middleware))
             .wrap(actix_web::middleware::Compress::default())
             .wrap(sentry_actix::Sentry::new())
+            .into_utoipa_app()
+            .configure(|cfg| utoipa_app_config(cfg, labrinth_config.clone()))
+            .openapi_service(|api| SwaggerUi::new("/docs/swagger-ui/{_:.*}")
+                .config(utoipa_swagger_ui::Config::default().try_it_out_enabled(true))
+                .url("/docs/openapi.json", ApiDoc::openapi().merge_from(api)))
+            .into_app()
             .configure(|cfg| app_config(cfg, labrinth_config.clone()))
     })
     .bind(dotenvy::var("BIND_ADDR").unwrap())?
     .run()
     .await
 }
+
+#[derive(utoipa::OpenApi)]
+#[openapi(info(title = "Labrinth"))]
+struct ApiDoc;
 
 fn log_error(err: &actix_web::Error) {
     if err.as_response_error().status_code().is_client_error() {

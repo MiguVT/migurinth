@@ -23,13 +23,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, windows-latest, ubuntu-22.04]
+        platform: [macos-latest, windows-latest, ubuntu-latest]
         include:
           - platform: macos-latest
             artifact-target-name: universal-apple-darwin
           - platform: windows-latest
             artifact-target-name: x86_64-pc-windows-msvc
-          - platform: ubuntu-22.04
+          - platform: ubuntu-latest
             artifact-target-name: x86_64-unknown-linux-gnu
 
     runs-on: ${{ matrix.platform }}
@@ -117,7 +117,7 @@ jobs:
 
       - name: 🔨 Build Windows app
         run: |
-          $env:JAVA_HOME = "$env:JAVA_HOME_11_X64"
+          $env:JAVA_HOME = "$env:JAVA_HOME_17_X64"
           pnpm --filter=@modrinth/app run tauri build --config tauri-release.conf.json --verbose --bundles 'nsis,updater'
         if: startsWith(matrix.platform, 'windows')
         env:

@@ -1,20 +1,8 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
-  - name: 🛠️ API issue (api.modrinth.com)
-    about: Report an issue regarding the Modrinth API. Problem is releated to Modrinth, this will redirect you to Modrinth issues.
-    url: https://github.com/modrinth/code/issues
-  - name: 🌐 Website bug (modrinth.com)
-    about: Report an issue on the Modrinth website. Problem is releated to Modrinth, this will redirect you to Modrinth issues.
-    url: https://github.com/modrinth/code/issues
-  - name: 🫶 Support Portal
-    about: Get support using through our portal.
+  - name: 🫶 Support portal
+    about: Get support using through our support website.
     url: https://support.modrinth.com
-  - name: 💬 Chat
+  - name: 💬 Chat on Discord
     about: Join our Discord server to chat about Modrinth.
     url: https://discord.modrinth.com
-  - name: 🛣️ Roadmap
-    about: View our Roadmap. Please do not open issues for items on our roadmap.
-    url: https://roadmap.modrinth.com
-  - name: 📚 Documentation
-    about: Useful documentation about Modrinth's API
-    url: https://docs.modrinth.com
