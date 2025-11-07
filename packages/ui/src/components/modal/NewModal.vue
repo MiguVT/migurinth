@@ -266,6 +266,12 @@ function handleKeyDown(event: KeyboardEvent) {
 	}
 }
 
+.modrinth-parent__no-modal-blurs {
+	.modal-overlay {
+		backdrop-filter: none;
+	}
+}
+
 .modal-container {
 	position: fixed;
 	top: 0;
@@ -314,7 +320,7 @@ function handleKeyDown(event: KeyboardEvent) {
 			transition: none !important;
 		}
 
-		@media screen and (max-width: 650px) {
+		@media screen and (max-width: 640px) {
 			width: calc(100% - 2 * var(--gap-lg));
 		}
 	}
