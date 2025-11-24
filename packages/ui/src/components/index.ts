@@ -127,13 +127,3 @@ export { default as ThemeSelector } from './settings/ThemeSelector.vue'
 
 // Servers
 export { default as ServersSpecs } from './billing/ServersSpecs.vue'
-export { default as BackupWarning } from './servers/backups/BackupWarning.vue'
-export { default as LoaderIcon } from './servers/icons/LoaderIcon.vue'
-export { default as ServerIcon } from './servers/icons/ServerIcon.vue'
-export { default as ServerInfoLabels } from './servers/labels/ServerInfoLabels.vue'
-export { default as MedalBackgroundImage } from './servers/marketing/MedalBackgroundImage.vue'
-export { default as MedalServerListing } from './servers/marketing/MedalServerListing.vue'
-export { default as ServerListing } from './servers/ServerListing.vue'
-export type { PendingChange } from './servers/ServerListing.vue'
-export { default as ServersPromo } from './servers/ServersPromo.vue'
-
