@@ -27,8 +27,8 @@ export { default as FilterBar } from './base/FilterBar.vue'
 export type { FilterBarOption } from './base/FilterBar.vue'
 export { default as HeadingLink } from './base/HeadingLink.vue'
 export { default as IconSelect } from './base/IconSelect.vue'
-export type { JoinedButtonAction } from './base/JoinedButtons.vue'
 export { default as JoinedButtons } from './base/JoinedButtons.vue'
+export type { JoinedButtonAction } from './base/JoinedButtons.vue'
 export { default as LoadingIndicator } from './base/LoadingIndicator.vue'
 export { default as ManySelect } from './base/ManySelect.vue'
 export { default as MarkdownEditor } from './base/MarkdownEditor.vue'
@@ -108,6 +108,7 @@ export { default as AffiliateLinkCreateModal } from './affiliate/AffiliateLinkCr
 export { default as AddPaymentMethodModal } from './billing/AddPaymentMethodModal.vue'
 export { default as ModrinthServersPurchaseModal } from './billing/ModrinthServersPurchaseModal.vue'
 export { default as PurchaseModal } from './billing/PurchaseModal.vue'
+export { default as ServersUpgradeModalWrapper } from './billing/ServersUpgradeModalWrapper.vue'
 
 // Skins
 export { default as CapeButton } from './skin/CapeButton.vue'
@@ -126,3 +127,13 @@ export { default as ThemeSelector } from './settings/ThemeSelector.vue'
 
 // Servers
 export { default as ServersSpecs } from './billing/ServersSpecs.vue'
+export { default as BackupWarning } from './servers/backups/BackupWarning.vue'
+export { default as LoaderIcon } from './servers/icons/LoaderIcon.vue'
+export { default as ServerIcon } from './servers/icons/ServerIcon.vue'
+export { default as ServerInfoLabels } from './servers/labels/ServerInfoLabels.vue'
+export { default as MedalBackgroundImage } from './servers/marketing/MedalBackgroundImage.vue'
+export { default as MedalServerListing } from './servers/marketing/MedalServerListing.vue'
+export { default as ServerListing } from './servers/ServerListing.vue'
+export type { PendingChange } from './servers/ServerListing.vue'
+export { default as ServersPromo } from './servers/ServersPromo.vue'
+

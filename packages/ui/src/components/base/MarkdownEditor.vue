@@ -293,7 +293,7 @@ import {
 	YouTubeIcon,
 } from '@modrinth/assets'
 import { markdownCommands, modrinthMarkdownEditorKeymap } from '@modrinth/utils/codemirror'
-import { renderHighlightedString } from '@modrinth/utils/highlight'
+import { renderHighlightedString } from '@modrinth/utils/highlightjs'
 import { type Component, computed, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue'
 
 import Modal from '../modal/Modal.vue'
@@ -891,7 +891,7 @@ function openVideoModal() {
 }
 
 .markdown-body-wrapper {
-	border: 1px solid var(--color-button-bg);
+	border: 1px solid var(--color-divider);
 	border-radius: var(--radius-md);
 	width: 100%;
 	padding: var(--radius-md);

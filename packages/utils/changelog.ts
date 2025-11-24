@@ -11,7 +11,58 @@ export type VersionEntry = {
 
 const VERSIONS: VersionEntry[] = [
 	{
-		date: `2025-11-07T09:30:00-07:00`,
+		date: `2025-11-19T15:15:00-08:00`,
+		product: 'app',
+		version: '0.10.20',
+		body: `## Improvements
+- Improved contrast, visibility, and consistency of UI elements, especially in light mode.
+- Fixed ads showing up in the loading screen, even when you have Modrinth+.
+- Added a warning banner when Minecraft's authentication servers are detected to be down.
+- Fixed icon when creating an instance not being saved.`,
+	},
+	{
+		date: `2025-11-14T12:15:00-08:00`,
+		product: 'servers',
+		body: `## Improvements
+- Improved the performance of the servers list.
+- Fixed startup commands not being updated properly.
+- Fixed autocomplete on pardon-ip and ban-ip commands.`,
+	},
+	{
+		date: `2025-11-14T12:15:00-08:00`,
+		product: 'web',
+		body: `## Improvements
+- Improved contrast, visibility, and consistency of UI elements, especially in light mode.
+- Fixed the chargest page not working properly.
+- Fixed certain icons showing above the mobile navbar.`,
+	},
+	{
+		date: `2025-11-11T12:50:00-08:00`,
+		product: 'app',
+		version: '0.10.19',
+		body: `## Improvements
+- Fixed automatic dependency resolution ignoring the selected mod loader.`,
+	},
+	{
+		date: `2025-11-10T11:20:00-08:00`,
+		product: 'app',
+		version: '0.10.18',
+		body: `No changes.`,
+	},
+	{
+		date: `2025-11-07T21:10:00-08:00`,
+		product: 'web',
+		body: `## Improvements
+- Enhanced syntax highlighting support for skript, mcfunction, and kubejs code blocks in Markdown descriptions.`,
+	},
+	{
+		date: `2025-11-07T15:45:00-08:00`,
+		product: 'web',
+		body: `## Improvements
+- Fixed download button pop-up on Resource Pack projects.`,
+	},
+	{
+		date: `2025-11-07T09:30:00-08:00`,
 		product: 'app',
 		version: '0.10.17',
 		body: `## Improvements
@@ -22,31 +73,31 @@ const VERSIONS: VersionEntry[] = [
 - Fixed glitchy text selection in Logs page.`,
 	},
 	{
-		date: `2025-11-07T09:30:00-07:00`,
+		date: `2025-11-07T09:30:00-08:00`,
 		product: 'web',
 		body: `## Improvements
 - Fixed 'Advanced rendering' toggle not working properly on many popups.`,
 	},
 	{
-		date: `2025-11-07T08:05:00-07:00`,
+		date: `2025-11-07T08:05:00-08:00`,
 		product: 'web',
 		body: `## Improvements
 - Fixed some further issues with the new withdrawal experience.`,
 	},
 	{
-		date: `2025-11-04T18:20:00-07:00`,
+		date: `2025-11-04T18:20:00-08:00`,
 		product: 'web',
 		body: `## Improvements
 - Fixed an issue with PayPal International fees.`,
 	},
 	{
-		date: `2025-11-04T16:20:00-07:00`,
+		date: `2025-11-04T16:20:00-08:00`,
 		product: 'web',
 		body: `## Improvements
 - Some bugfixes to the new withdrawal experience.`,
 	},
 	{
-		date: `2025-11-03T15:30:00-07:00`,
+		date: `2025-11-03T15:30:00-08:00`,
 		product: 'web',
 		body: `## Improvements
 - Revamped creator revenue page and withdrawal experience.`,

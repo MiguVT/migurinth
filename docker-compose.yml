@@ -6,13 +6,13 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     environment:
       POSTGRES_USER: labrinth
       POSTGRES_PASSWORD: labrinth
       POSTGRES_HOST_AUTH_METHOD: trust
     healthcheck:
-      test: [ 'CMD', 'pg_isready' ]
+      test: ['CMD', 'pg_isready']
       interval: 3s
       timeout: 5s
       retries: 3
@@ -21,14 +21,14 @@ services:
     container_name: labrinth-meilisearch
     restart: on-failure
     ports:
-      - '7700:7700'
+      - '127.0.0.1:7700:7700'
     volumes:
       - meilisearch-data:/data.ms
     environment:
       MEILI_MASTER_KEY: modrinth
       MEILI_HTTP_PAYLOAD_SIZE_LIMIT: 107374182400
     healthcheck:
-      test: [ 'CMD', 'curl', '--fail', 'http://localhost:7700/health' ]
+      test: ['CMD', 'curl', '--fail', 'http://localhost:7700/health']
       interval: 3s
       timeout: 5s
       retries: 3
@@ -37,11 +37,11 @@ services:
     container_name: labrinth-redis
     restart: on-failure
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     volumes:
       - redis-data:/data
     healthcheck:
-      test: [ 'CMD', 'redis-cli', 'PING' ]
+      test: ['CMD', 'redis-cli', 'PING']
       interval: 3s
       timeout: 5s
       retries: 3
@@ -49,12 +49,12 @@ services:
     image: clickhouse/clickhouse-server
     container_name: labrinth-clickhouse
     ports:
-      - '8123:8123'
+      - '127.0.0.1:8123:8123'
     environment:
       CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: default
     healthcheck:
-      test: [ 'CMD-SHELL', 'clickhouse-client --query "SELECT 1"' ]
+      test: ['CMD-SHELL', 'clickhouse-client --query "SELECT 1"']
       interval: 3s
       timeout: 5s
       retries: 3
@@ -62,12 +62,19 @@ services:
     image: axllent/mailpit:v1.27
     container_name: labrinth-mail
     ports:
-      - '1025:1025'
-      - '8025:8025'
+      - '127.0.0.1:1025:1025'
+      - '127.0.0.1:8025:8025'
     environment:
       MP_ENABLE_SPAMASSASSIN: postmark
     healthcheck:
-      test: [ 'CMD', 'wget', '-q', '-O/dev/null', 'http://localhost:8025/api/v1/info' ]
+      test:
+        [
+          'CMD',
+          'wget',
+          '-q',
+          '-O/dev/null',
+          'http://localhost:8025/api/v1/info',
+        ]
       interval: 3s
       timeout: 5s
       retries: 3
@@ -75,7 +82,11 @@ services:
     image: gotenberg/gotenberg:8
     container_name: labrinth-gotenberg
     ports:
-      - "3000:13000"
+      - '127.0.0.1:13000:3000'
+    extra_hosts:
+      # Gotenberg must send a message on a webhook to our backend,
+      # so it must have access to our local network
+      - 'host.docker.internal:host-gateway'
   labrinth:
     profiles:
       - with-labrinth
@@ -84,7 +95,7 @@ services:
       dockerfile: ./apps/labrinth/Dockerfile
     container_name: labrinth
     ports:
-      - '8000:8000'
+      - '127.0.0.1:8000:8000'
     env_file: ./apps/labrinth/.env.docker-compose
     volumes:
       - labrinth-cdn-data:/tmp/modrinth

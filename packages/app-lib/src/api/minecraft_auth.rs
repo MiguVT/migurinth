@@ -1,7 +1,23 @@
 //! Authentication flow interface
 
+use reqwest::StatusCode;
+
 use crate::State;
 use crate::state::{Credentials, MinecraftLoginFlow, MinecraftProfile};
+use crate::util::fetch::REQWEST_CLIENT;
+
+#[tracing::instrument]
+pub async fn check_reachable() -> crate::Result<()> {
+    let resp = REQWEST_CLIENT
+        .get("https://api.minecraftservices.com/entitlements/mcstore")
+        .send()
+        .await?;
+    if resp.status() == StatusCode::UNAUTHORIZED {
+        return Ok(());
+    }
+    resp.error_for_status()?;
+    Ok(())
+}
 
 #[tracing::instrument]
 pub async fn begin_login() -> crate::Result<MinecraftLoginFlow> {
@@ -75,7 +91,9 @@ pub async fn users() -> crate::Result<Vec<Credentials>> {
 
 /// Create offline credentials for a given username
 #[tracing::instrument]
-pub async fn create_offline_credentials(username: String) -> crate::Result<Credentials> {
+pub async fn create_offline_credentials(
+    username: String,
+) -> crate::Result<Credentials> {
     let state = State::get().await?;
 
     // Generate a random UUID for the offline user

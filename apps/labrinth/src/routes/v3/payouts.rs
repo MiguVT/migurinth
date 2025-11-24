@@ -10,11 +10,13 @@ use crate::models::payouts::{
     MuralPayDetails, PayoutMethodRequest, PayoutMethodType, PayoutStatus,
     TremendousDetails, TremendousForexResponse,
 };
-use crate::queue::payouts::PayoutsQueue;
+use crate::queue::payouts::mural::MuralPayoutRequest;
+use crate::queue::payouts::{PayoutFees, PayoutsQueue};
 use crate::queue::session::AuthQueue;
 use crate::routes::ApiError;
 use crate::util::avalara1099;
 use crate::util::error::Context;
+use crate::util::gotenberg::GotenbergClient;
 use actix_web::{HttpRequest, HttpResponse, delete, get, post, web};
 use chrono::{DateTime, Duration, Utc};
 use eyre::eyre;
@@ -476,6 +478,7 @@ pub async fn create_payout(
     body: web::Json<Withdrawal>,
     session_queue: web::Data<AuthQueue>,
     payouts_queue: web::Data<PayoutsQueue>,
+    gotenberg: web::Data<GotenbergClient>,
 ) -> Result<(), ApiError> {
     let (scopes, user) = get_user_record_from_bearer_token(
         &req,
@@ -609,6 +612,8 @@ pub async fn create_payout(
         body: &body,
         user: &user,
         payout_id,
+        gross_amount: body.amount,
+        fees,
         amount_minus_fee,
         total_fee: fees.total_fee(),
         sent_to_method,
@@ -623,7 +628,7 @@ pub async fn create_payout(
             tremendous_payout(payout_cx, method_details).await?
         }
         PayoutMethodRequest::MuralPay { method_details } => {
-            mural_pay_payout(payout_cx, method_details).await?
+            mural_pay_payout(payout_cx, method_details, &gotenberg).await?
         }
     };
 
@@ -648,6 +653,8 @@ struct PayoutContext<'a> {
     body: &'a Withdrawal,
     user: &'a DBUser,
     payout_id: DBPayoutId,
+    gross_amount: Decimal,
+    fees: PayoutFees,
     /// Set as the [`DBPayout::amount`] field.
     amount_minus_fee: Decimal,
     /// Set as the [`DBPayout::fee`] field.
@@ -674,6 +681,8 @@ async fn tremendous_payout(
         body,
         user,
         payout_id,
+        gross_amount: _,
+        fees: _,
         amount_minus_fee,
         total_fee,
         sent_to_method,
@@ -685,18 +694,6 @@ async fn tremendous_payout(
     }: &TremendousDetails,
 ) -> Result<DBPayout, ApiError> {
     let user_email = get_verified_email(user)?;
-
-    let mut payout_item = DBPayout {
-        id: payout_id,
-        user_id: user.id,
-        created: Utc::now(),
-        status: PayoutStatus::InTransit,
-        amount: amount_minus_fee,
-        fee: Some(total_fee),
-        method: Some(PayoutMethodType::Tremendous),
-        method_address: Some(user_email.to_string()),
-        platform_id: None,
-    };
 
     #[derive(Deserialize)]
     struct Reward {
@@ -766,47 +763,72 @@ async fn tremendous_payout(
         )
         .await?;
 
-    if let Some(reward) = res.order.rewards.first() {
-        payout_item.platform_id = Some(reward.id.clone())
-    }
-
-    Ok(payout_item)
-}
-
-async fn mural_pay_payout(
-    PayoutContext {
-        body: _body,
-        user,
-        payout_id,
-        amount_minus_fee,
-        total_fee,
-        sent_to_method,
-        payouts_queue,
-    }: PayoutContext<'_>,
-    details: &MuralPayDetails,
-) -> Result<DBPayout, ApiError> {
-    let user_email = get_verified_email(user)?;
-
-    let payout_request = payouts_queue
-        .create_muralpay_payout_request(
-            user.id.into(),
-            muralpay::TokenAmount {
-                token_symbol: muralpay::USDC.into(),
-                token_amount: sent_to_method,
-            },
-            details.payout_details.clone(),
-            details.recipient_info.clone(),
-        )
-        .await?;
+    let platform_id = res.order.rewards.first().map(|reward| reward.id.clone());
 
     Ok(DBPayout {
         id: payout_id,
         user_id: user.id,
         created: Utc::now(),
-        status: PayoutStatus::Success,
+        status: PayoutStatus::InTransit,
+        amount: amount_minus_fee,
+        fee: Some(total_fee),
+        method: Some(PayoutMethodType::Tremendous),
+        method_id: Some(body.method_id.clone()),
+        method_address: Some(user_email.to_string()),
+        platform_id,
+    })
+}
+
+async fn mural_pay_payout(
+    PayoutContext {
+        body: _,
+        user,
+        payout_id,
+        gross_amount,
+        fees,
+        amount_minus_fee,
+        total_fee,
+        sent_to_method: _,
+        payouts_queue,
+    }: PayoutContext<'_>,
+    details: &MuralPayDetails,
+    gotenberg: &GotenbergClient,
+) -> Result<DBPayout, ApiError> {
+    let user_email = get_verified_email(user)?;
+
+    let payout_request = payouts_queue
+        .create_muralpay_payout_request(
+            payout_id,
+            user.id.into(),
+            gross_amount,
+            fees,
+            details.payout_details.clone(),
+            details.recipient_info.clone(),
+            gotenberg,
+        )
+        .await?;
+
+    let method_id = match &details.payout_details {
+        MuralPayoutRequest::Blockchain { .. } => {
+            "blockchain-usdc-polygon".to_string()
+        }
+        MuralPayoutRequest::Fiat {
+            fiat_and_rail_details,
+            ..
+        } => fiat_and_rail_details.code().to_string(),
+    };
+
+    Ok(DBPayout {
+        id: payout_id,
+        user_id: user.id,
+        created: Utc::now(),
+        // after the payout has been successfully executed,
+        // we wait for Mural's confirmation that the funds have been delivered
+        status: PayoutStatus::InTransit,
         amount: amount_minus_fee,
         fee: Some(total_fee),
         method: Some(PayoutMethodType::MuralPay),
+        method_id: Some(method_id),
         method_address: Some(user_email.to_string()),
         platform_id: Some(payout_request.id.to_string()),
     })
@@ -817,6 +839,8 @@ async fn paypal_payout(
         body,
         user,
         payout_id,
+        gross_amount: _,
+        fees: _,
         amount_minus_fee,
         total_fee,
         sent_to_method,
@@ -874,18 +898,6 @@ async fn paypal_payout(
         pub links: Vec<PayPalLink>,
     }
 
-    let mut payout_item = crate::database::models::payout_item::DBPayout {
-        id: payout_id,
-        user_id: user.id,
-        created: Utc::now(),
-        status: PayoutStatus::InTransit,
-        amount: amount_minus_fee,
-        fee: Some(total_fee),
-        method: Some(body.method.method_type()),
-        method_address: Some(display_address.clone()),
-        platform_id: None,
-    };
-
     let res: PayoutsResponse = payouts_queue.make_paypal_request(
         Method::POST,
         "payments/payouts",
@@ -913,33 +925,50 @@ async fn paypal_payout(
         None
     ).await?;
 
-    if let Some(link) = res.links.first() {
-        #[derive(Deserialize)]
-        struct PayoutItem {
-            pub payout_item_id: String,
-        }
+    let link = res
+        .links
+        .first()
+        .wrap_request_err("no PayPal links available")?;
 
-        #[derive(Deserialize)]
-        struct PayoutData {
-            pub items: Vec<PayoutItem>,
-        }
-
-        if let Ok(res) = payouts_queue
-            .make_paypal_request::<(), PayoutData>(
-                Method::GET,
-                &link.href,
-                None,
-                None,
-                Some(true),
-            )
-            .await
-            && let Some(data) = res.items.first()
-        {
-            payout_item.platform_id = Some(data.payout_item_id.clone());
-        }
+    #[derive(Deserialize)]
+    struct PayoutItem {
+        pub payout_item_id: String,
     }
 
-    Ok(payout_item)
+    #[derive(Deserialize)]
+    struct PayoutData {
+        pub items: Vec<PayoutItem>,
+    }
+
+    let res = payouts_queue
+        .make_paypal_request::<(), PayoutData>(
+            Method::GET,
+            &link.href,
+            None,
+            None,
+            Some(true),
+        )
+        .await
+        .wrap_internal_err("failed to make PayPal request")?;
+    let data = res
+        .items
+        .first()
+        .wrap_internal_err("no payout items returned from PayPal request")?;
+
+    let platform_id = Some(data.payout_item_id.clone());
+
+    Ok(DBPayout {
+        id: payout_id,
+        user_id: user.id,
+        created: Utc::now(),
+        status: PayoutStatus::InTransit,
+        amount: amount_minus_fee,
+        fee: Some(total_fee),
+        method: Some(body.method.method_type()),
+        method_id: Some(body.method_id.clone()),
+        method_address: Some(display_address.clone()),
+        platform_id,
+    })
 }
 
 /// User performing a payout-related action.
@@ -948,18 +977,41 @@ async fn paypal_payout(
 pub enum TransactionItem {
     /// User withdrew some of their available payout.
     Withdrawal {
+        /// ID of the payout.
         id: PayoutId,
+        /// Status of this payout.
         status: PayoutStatus,
+        /// When the payout was created.
         created: DateTime<Utc>,
+        /// How much the user got from this payout, excluding fees.
         amount: Decimal,
+        /// How much the user paid in fees for this payout, on top of `amount`.
         fee: Option<Decimal>,
+        /// What payout method type was used for this.
         method_type: Option<PayoutMethodType>,
+        /// Payout-method-specific ID for the type of payout the user got.
+        ///
+        /// - Tremendous: the rewarded gift card ID.
+        /// - Mural: the payment rail code used.
+        ///   - Blockchain: `blockchain-usdc-polygon`.
+        ///   - Fiat: see [`muralpay::FiatAndRailCode`].
+        /// - PayPal: `paypal_us`.
+        /// - Venmo: `venmo`.
+        ///
+        /// For legacy transactions, this may be [`None`] as we did not always
+        /// store this payout info.
+        method_id: Option<String>,
+        /// Payout-method-specific address which the payout was sent to, like
+        /// an email address.
         method_address: Option<String>,
     },
     /// User got a payout available for them to withdraw.
     PayoutAvailable {
+        /// When this payout was made available for the user to withdraw.
         created: DateTime<Utc>,
+        /// Where this payout came from.
         payout_source: PayoutSource,
+        /// How much the payout was worth.
         amount: Decimal,
     },
 }
@@ -1031,6 +1083,7 @@ pub async fn transaction_history(
                 amount: payout.amount,
                 fee: payout.fee,
                 method_type: payout.method,
+                method_id: payout.method_id,
                 method_address: payout.method_address,
             });
 

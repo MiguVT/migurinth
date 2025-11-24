@@ -304,7 +304,13 @@
 						/>
 					</div>
 				</div>
-				<div v-else-if="route.params.projectType !== 'collections'" class="error">
+				<div
+					v-else-if="
+						(route.params.projectType && route.params.projectType !== 'collections') ||
+						(!route.params.projectType && collections.length === 0)
+					"
+					class="error"
+				>
 					<UpToDate class="icon" />
 					<br />
 					<span v-if="auth.user && auth.user.id === user.id" class="preserve-lines text">
@@ -318,7 +324,10 @@
 					</span>
 					<span v-else class="text">{{ formatMessage(messages.profileNoProjectsLabel) }}</span>
 				</div>
-				<div v-if="['collections'].includes(route.params.projectType)" class="collections-grid">
+				<div
+					v-if="!route.params.projectType || route.params.projectType === 'collections'"
+					class="collections-grid"
+				>
 					<nuxt-link
 						v-for="collection in collections.sort(
 							(a, b) => new Date(b.created) - new Date(a.created),
@@ -902,6 +911,7 @@ export default defineNuxtComponent({
 	}
 
 	gap: var(--gap-md);
+	margin-bottom: var(--gap-md);
 
 	.collection-item {
 		display: flex;

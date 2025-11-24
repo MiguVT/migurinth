@@ -345,7 +345,7 @@ onUnmounted(() => {
 	z-index: 11;
 	gap: 0.5rem;
 	padding: 1rem;
-	border: 1px solid var(--color-button-bg);
+	border: 1px solid var(--color-divider);
 	width: max-content;
 	user-select: none;
 	-ms-user-select: none;
@@ -441,7 +441,7 @@ onUnmounted(() => {
 	text-align: left;
 
 	&.expanded {
-		border: 1px solid var(--color-button-bg);
+		border: 1px solid var(--color-divider);
 		padding: 1rem;
 	}
 }
