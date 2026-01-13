@@ -26,9 +26,14 @@ pub use event::{
 pub use logger::start_logger;
 pub use state::State;
 pub use state::dirs::DirectoryInfo;
-
-pub const LAUNCHER_USER_AGENT: &str = concat!(
-    "migurinth/theseus/",
-    env!("CARGO_PKG_VERSION"),
-    " (contacto@migurinth.com)"
-);
+pub fn launcher_user_agent() -> String {
+    pub const LAUNCHER_USER_AGENT: &str = concat!(
+        const LAUNCHER_BASE_USER_AGENT: &str =
+            concat!("migurinth/theseus/", env!("CARGO_PKG_VERSION"),);,
+        format!(
+            "{} ({}; contacto@migurinth.com)",
+            LAUNCHER_BASE_USER_AGENT,
+            std::env::consts::OS
+        )
+    );
+}
