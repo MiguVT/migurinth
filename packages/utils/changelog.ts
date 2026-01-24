@@ -11,6 +11,20 @@ export type VersionEntry = {
 
 const VERSIONS: VersionEntry[] = [
 	{
+		date: `2026-01-23T13:00:00-08:00`,
+		product: 'app',
+		version: '0.10.27',
+		body: `## Improvements
+- Fixed installing content from Discover refusing to create NeoForge instances.
+- Added circuit-breaker logic to prevent Modrinth App from spamming API requests during downtime.`,
+	},
+	{
+		date: `2026-01-23T12:25:00-08:00`,
+		product: 'web',
+		body: `## Improvements
+- Significant performance improvements to project pages.`,
+	},
+	{
 		date: `2026-01-22T11:40:00-08:00`,
 		product: 'web',
 		body: `## Improvements
